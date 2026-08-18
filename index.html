@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Pokémon Champions | Ultimate Stadium Battle</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#030308">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- Fonts & Libraries -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Plus+Jakarta+Sans:wght@600;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --sat: env(safe-area-inset-top, 0px);
+            --sab: env(safe-area-inset-bottom, 0px);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: 'Press Start 2P', monospace;
+            background-color: #030308;
+            color: #f8fafc;
+            height: 100dvh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        /* 3D STADIUM PERSPECTIVE */
+        .stadium-stage {
+            perspective: 1200px;
+            background: radial-gradient(circle at 50% 20%, rgba(99, 102, 241, 0.2) 0%, #030308 80%);
+        }
+
+        .battle-pitch {
+            transform: rotateX(58deg) translateZ(-40px);
+            background: radial-gradient(ellipse at center, #0f172a 15%, #020617 85%);
+            border: 4px solid rgba(99, 102, 241, 0.35);
+            box-shadow: 0 0 100px rgba(99, 102, 241, 0.25), inset 0 0 80px rgba(0, 0, 0, 0.9);
+        }
+
+        /* SPRITE ANIMATIONS */
+        .pokemon-sprite {
+            image-rendering: pixelated;
+            filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.75));
+        }
+
+        @keyframes sprite-idle {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-8px) scale(1.03); }
+        }
+        .anim-idle { animation: sprite-idle 2.4s ease-in-out infinite; }
+
+        @keyframes lunge-right {
+            0% { transform: translateX(0) scale(1); }
+            50% { transform: translateX(70px) scale(1.18); }
+            100% { transform: translateX(0) scale(1); }
+        }
+        .anim-lunge-player { animation: lunge-right 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+        @keyframes lunge-left {
+            0% { transform: translateX(0) scale(1); }
+            50% { transform: translateX(-70px) scale(1.18); }
+            100% { transform: translateX(0) scale(1); }
+        }
+        .anim-lunge-enemy { animation: lunge-left 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+        @keyframes screen-shake {
+            0%, 100% { transform: translate(0, 0); }
+            20% { transform: translate(-12px, 10px) rotate(-1deg); }
+            40% { transform: translate(12px, -10px) rotate(1deg); }
+            60% { transform: translate(-6px, 6px); }
+            80% { transform: translate(6px, -6px); }
+        }
+        .shake-fx { animation: screen-shake 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+
+        @keyframes damage-flash {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(5) contrast(200%) drop-shadow(0 0 30px #ef4444); }
+        }
+        .flash-fx { animation: damage-flash 0.3s ease-out; }
+
+        /* Glassmorphism Panel */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="flex flex-col relative select-none">
+
+    <!-- TOP HEADER -->
+    <header class="h-14 pt-[var(--sat)] px-4 flex items-center justify-between shrink-0 z-40 bg-[#070913]/95 border-b border-white/5">
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 text-xs">
+                <i class="fa-solid fa-gamepad"></i>
+            </div>
+            <div>
+                <h1 class="text-xs text-white leading-tight">POKÉMON <span class="text-indigo-400">CHAMPIONS</span></h1>
+                <span id="league-badge" class="text-[8px] text-gray-400 font-sans">Kanto League Arena</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button onclick="toggleAudio()" id="audio-btn" class="px-2.5 py-1.5 rounded-lg glass-panel text-[9px] text-gray-300 flex items-center gap-1.5 transition active:scale-95">
+                <i class="fa-solid fa-volume-xmark text-rose-400" id="audio-icon"></i>
+                <span id="audio-text">Audio: OFF</span>
+            </button>
+            <button onclick="openGymMenu()" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 active:bg-indigo-500 text-[9px] text-white font-bold transition">
+                <i class="fa-solid fa-trophy mr-1"></i> Gyms
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN BATTLE ARENA -->
+    <main id="battle-arena" class="flex-1 stadium-stage relative overflow-hidden flex flex-col justify-between p-4 pb-2">
+        
+        <!-- ENEMY HUD & SPRITE -->
+        <div class="w-full flex justify-between items-start max-w-xl mx-auto z-20 px-2">
+            <div class="glass-panel p-3 rounded-2xl w-52 sm:w-60 border-rose-500/20 shadow-2xl">
+                <div class="flex justify-between items-center text-[9px] mb-1">
+                    <span id="enemy-name" class="font-bold text-rose-400">CHARIZARD</span>
+                    <span id="enemy-lvl" class="text-gray-400 font-mono">Lv.85</span>
+                </div>
+                <div class="w-full h-2.5 bg-black/60 rounded-full overflow-hidden p-0.5 border border-white/10">
+                    <div id="enemy-hp-bar" class="h-full bg-emerald-400 rounded-full w-full transition-all duration-500"></div>
+                </div>
+                <div class="flex justify-between items-center text-[8px] mt-1 text-gray-400 font-mono">
+                    <span id="enemy-type-badge" class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300">FIRE</span>
+                    <span id="enemy-hp-text">100%</span>
+                </div>
+            </div>
+
+            <div class="relative w-36 h-36 flex items-center justify-center">
+                <div class="absolute bottom-2 w-28 h-8 rounded-full bg-black/50 blur-md -z-10"></div>
+                <img id="enemy-sprite" class="pokemon-sprite anim-idle w-32 h-32 object-contain" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/6.gif" alt="Enemy">
+            </div>
+        </div>
+
+        <!-- 3D PITCH FIELD -->
+        <div class="absolute inset-x-6 top-1/3 bottom-20 battle-pitch rounded-[40px] -z-10 flex items-center justify-center">
+            <div class="w-24 h-24 rounded-full border-2 border-indigo-500/30 flex items-center justify-center">
+                <div class="w-8 h-8 rounded-full bg-indigo-500/20"></div>
+            </div>
+        </div>
+
+        <!-- PLAYER HUD & SPRITE -->
+        <div class="w-full flex justify-between items-end max-w-xl mx-auto z-20 px-2">
+            <div class="relative w-36 h-36 flex items-center justify-center">
+                <div class="absolute bottom-2 w-28 h-8 rounded-full bg-black/50 blur-md -z-10"></div>
+                <img id="player-sprite" class="pokemon-sprite anim-idle w-32 h-32 object-contain" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/back/9.gif" alt="Player">
+            </div>
+
+            <div class="glass-panel p-3 rounded-2xl w-52 sm:w-60 border-indigo-500/30 shadow-2xl mb-2">
+                <div class="flex justify-between items-center text-[9px] mb-1">
+                    <span id="player-name" class="font-bold text-indigo-400">BLASTOISE</span>
+                    <span id="player-lvl" class="text-gray-400 font-mono">Lv.85</span>
+                </div>
+                <div class="w-full h-2.5 bg-black/60 rounded-full overflow-hidden p-0.5 border border-white/10">
+                    <div id="player-hp-bar" class="h-full bg-emerald-400 rounded-full w-full transition-all duration-500"></div>
+                </div>
+                <div class="flex justify-between items-center text-[8px] mt-1 text-gray-400 font-mono">
+                    <span id="player-type-badge" class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300">WATER</span>
+                    <span id="player-hp-text">280 / 280</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- CONTROL FOOTER -->
+    <footer class="h-44 bg-[#05060d]/95 border-t border-white/10 p-3 flex flex-col justify-between max-w-2xl mx-auto w-full z-40">
+        <div id="battle-log" class="text-[9px] leading-relaxed text-indigo-200 h-8 flex items-center px-3 rounded-xl bg-white/5 font-mono border border-white/5 overflow-hidden">
+            Champion Stadium Match Started!
+        </div>
+
+        <div id="moves-grid" class="grid grid-cols-2 gap-2 mt-2">
+            <!-- Dynamic Move Buttons injected via JS -->
+        </div>
+    </footer>
+
+    <!-- GYM SELECTION MODAL -->
+    <div id="gym-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-md p-5 rounded-3xl space-y-4 max-h-[85vh] flex flex-col">
+            <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                <span class="text-xs text-indigo-400 font-bold">SELECT GYM CHALLENGE</span>
+                <button onclick="closeGymMenu()" class="text-gray-400 hover:text-white text-xs">✕</button>
+            </div>
+            <div id="gym-list" class="space-y-2 overflow-y-auto pr-1 no-scrollbar flex-1">
+                <!-- Gyms injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ENGINE DATA & GAME LOGIC -->
+    <script>
+        // TYPE EFFECTIVENESS TABLE[cite: 4]
+        const TYPE_CHART = {
+            Normal: { Rock: 0.5, Ghost: 0, Steel: 0.5 },
+            Fire: { Fire: 0.5, Water: 0.5, Grass: 2, Ice: 2, Bug: 2, Rock: 0.5, Dragon: 0.5, Steel: 2 },
+            Water: { Fire: 2, Water: 0.5, Grass: 0.5, Ground: 2, Rock: 2, Dragon: 0.5 },
+            Electric: { Water: 2, Electric: 0.5, Grass: 0.5, Ground: 0, Flying: 2, Dragon: 0.5 },
+            Grass: { Fire: 0.5, Water: 2, Grass: 0.5, Poison: 0.5, Ground: 2, Flying: 0.5, Bug: 0.5, Rock: 2, Dragon: 0.5, Steel: 0.5 },
+            Ice: { Fire: 0.5, Water: 0.5, Grass: 2, Ice: 0.5, Ground: 2, Flying: 2, Dragon: 2, Steel: 0.5 },
+            Fighting: { Normal: 2, Ice: 2, Poison: 0.5, Flying: 0.5, Psychic: 0.5, Bug: 0.5, Rock: 2, Ghost: 0, Dark: 2, Steel: 2, Fairy: 0.5 },
+            Poison: { Grass: 2, Poison: 0.5, Ground: 0.5, Rock: 0.5, Ghost: 0.5, Steel: 0 },
+            Ground: { Fire: 2, Electric: 2, Grass: 0.5, Poison: 2, Flying: 0, Bug: 0.5, Rock: 2, Steel: 2 },
+            Flying: { Electric: 0.5, Grass: 2, Fighting: 2, Bug: 2, Rock: 0.5, Steel: 0.5 },
+            Psychic: { Fighting: 2, Poison: 2, Psychic: 0.5, Dark: 0, Steel: 0.5 },
+            Bug: { Fire: 0.5, Grass: 2, Fighting: 0.5, Poison: 0.5, Flying: 0.5, Psychic: 2, Ghost: 0.5, Dark: 2, Steel: 0.5, Fairy: 0.5 },
+            Rock: { Fire: 2, Ice: 2, Fighting: 0.5, Ground: 0.5, Flying: 2, Bug: 2, Steel: 0.5 },
+            Ghost: { Normal: 0, Psychic: 2, Ghost: 2, Dark: 0.5 },
+            Dragon: { Dragon: 2, Steel: 0.5, Fairy: 0 },
+            Steel: { Fire: 0.5, Water: 0.5, Electric: 0.5, Ice: 2, Rock: 2, Steel: 0.5, Fairy: 2 },
+            Dark: { Fighting: 0.5, Psychic: 2, Ghost: 2, Dark: 0.5, Fairy: 0.5 },
+            Fairy: { Fire: 0.5, Fighting: 2, Poison: 0.5, Dragon: 2, Dark: 2, Steel: 0.5 },
+            God: { Normal: 1, Fire: 1, Water: 1, Grass: 1, Electric: 1, Ice: 1, Fighting: 1, Poison: 1, Ground: 1, Flying: 1, Psychic: 1, Bug: 1, Rock: 1, Ghost: 1, Dragon: 1, Steel: 1, Dark: 1, Fairy: 1 }
+        };
+
+        // MOVE DATABASE[cite: 4]
+        const MOVES = {
+            "Hydro Pump": { name: "Hydro Pump", type: "Water", power: 110, color: "#38bdf8" },
+            "Ice Beam": { name: "Ice Beam", type: "Ice", power: 90, color: "#67e8f9" },
+            "Flash Cannon": { name: "Flash Cannon", type: "Steel", power: 80, color: "#94a3b8" },
+            "Skull Bash": { name: "Skull Bash", type: "Normal", power: 130, color: "#f59e0b" },
+            "Flamethrower": { name: "Flamethrower", type: "Fire", power: 90, color: "#ef4444" },
+            "Air Slash": { name: "Air Slash", type: "Flying", power: 75, color: "#a855f7" },
+            "Dragon Claw": { name: "Dragon Claw", type: "Dragon", power: 80, color: "#6366f1" },
+            "Fire Blast": { name: "Fire Blast", type: "Fire", power: 110, color: "#f97316" },
+            "Solar Beam": { name: "Solar Beam", type: "Grass", power: 120, color: "#22c55e" },
+            "Earthquake": { name: "Earthquake", type: "Ground", power: 100, color: "#eab308" },
+            "Thunderbolt": { name: "Thunderbolt", type: "Electric", power: 90, color: "#facc15" },
+            "Thunder": { name: "Thunder", type: "Electric", power: 110, color: "#eab308" },
+            "Shadow Ball": { name: "Shadow Ball", type: "Ghost", power: 80, color: "#a855f7" },
+            "Psychic": { name: "Psychic", type: "Psychic", power: 90, color: "#ec4899" },
+            "Dragon Ascent": { name: "Dragon Ascent", type: "Flying", power: 120, color: "#3b82f6" },
+            "Judgment": { name: "Judgment", type: "God", power: 100, color: "#e2e8f0" }
+        };
+
+        // POKEMON DATABASE[cite: 4]
+        const POKEDEX = {
+            Blastoise: { id: 9, name: "Blastoise", type: "Water", hp: 280, moves: ["Hydro Pump", "Ice Beam", "Flash Cannon", "Skull Bash"] },
+            Charizard: { id: 6, name: "Charizard", type: "Fire", hp: 260, moves: ["Flamethrower", "Air Slash", "Dragon Claw", "Fire Blast"] },
+            Venusaur: { id: 3, name: "Venusaur", type: "Grass", hp: 270, moves: ["Solar Beam", "Earthquake", "Sludge Bomb", "Skull Bash"] },
+            Pikachu: { id: 25, name: "Pikachu", type: "Electric", hp: 220, moves: ["Thunderbolt", "Thunder", "Iron Tail", "Quick Attack"] },
+            Gengar: { id: 94, name: "Gengar", type: "Ghost", hp: 240, moves: ["Shadow Ball", "Sludge Bomb", "Thunderbolt", "Psychic"] },
+            Garchomp: { id: 445, name: "Garchomp", type: "Dragon", hp: 300, moves: ["Dragon Claw", "Earthquake", "Fire Blast", "Stone Edge"] },
+            Rayquaza: { id: 384, name: "Rayquaza", type: "Dragon", hp: 320, moves: ["Dragon Ascent", "Earthquake", "Flamethrower", "Outrage"] },
+            Arceus: { id: 493, name: "Arceus", type: "God", hp: 350, moves: ["Judgment", "Earthquake", "Ice Beam", "Thunderbolt"] }
+        };
+
+        // GYM STADIUM STAGES[cite: 4]
+        const GYMS = [
+            { name: "Pewter Gym", leader: "Brock", boss: "Onix", lvl: 25 },
+            { name: "Cerulean Gym", leader: "Misty", boss: "Blastoise", lvl: 35 },
+            { name: "Vermilion Gym", leader: "Lt. Surge", boss: "Pikachu", lvl: 45 },
+            { name: "Celadon Gym", leader: "Erika", boss: "Venusaur", lvl: 55 },
+            { name: "Fuchsia Gym", leader: "Koga", boss: "Gengar", lvl: 65 },
+            { name: "Viridian Gym", leader: "Giovanni", boss: "Garchomp", lvl: 75 },
+            { name: "Sky Pillar", leader: "Zinnia", boss: "Rayquaza", lvl: 85 },
+            { name: "Hall of Origin", leader: "Champion", boss: "Arceus", lvl: 100 }
+        ];
+
+        // GAME STATE[cite: 3, 4]
+        const battle = {
+            player: { ...POKEDEX.Blastoise, maxHp: POKEDEX.Blastoise.hp, currentHp: POKEDEX.Blastoise.hp, lvl: 85 },
+            enemy: { ...POKEDEX.Charizard, maxHp: POKEDEX.Charizard.hp, currentHp: POKEDEX.Charizard.hp, lvl: 85 },
+            isTurnLocked: false
+        };
+
+        // AUDIO SYNTHESIZER[cite: 3]
+        let audioOn = false;
+        let polySynth, hitNoise;
+
+        function toggleAudio() {
+            if (!polySynth) {
+                polySynth = new Tone.PolySynth(Tone.Synth).toDestination();
+                hitNoise = new Tone.NoiseSynth().toDestination();
+            }
+            Tone.start();
+            audioOn = !audioOn;
+            document.getElementById('audio-text').innerText = audioOn ? "Audio: ON" : "Audio: OFF";
+            document.getElementById('audio-icon').className = audioOn ? "fa-solid fa-volume-high text-emerald-400" : "fa-solid fa-volume-xmark text-rose-400";
+            if (audioOn) polySynth.triggerAttackRelease(['C4', 'E4', 'G4'], '8n');
+        }
+
+        function playSfx(type) {
+            if (!audioOn) return;
+            try {
+                if (type === 'hit') hitNoise.triggerAttackRelease('16n');
+                else if (type === 'super') polySynth.triggerAttackRelease(['G4', 'C5', 'E5'], '8n');
+                else if (type === 'faint') polySynth.triggerAttackRelease(['G3', 'Eb3', 'C3'], '4n');
+            } catch(e) {}
+        }
+
+        // INITIALIZE HUD & MOVES
+        function initBattleView() {
+            document.getElementById('player-name').innerText = battle.player.name;
+            document.getElementById('player-lvl').innerText = `Lv.${battle.player.lvl}`;
+            document.getElementById('player-type-badge').innerText = battle.player.type;
+            document.getElementById('player-sprite').src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/back/${battle.player.id}.gif`;
+
+            document.getElementById('enemy-name').innerText = battle.enemy.name;
+            document.getElementById('enemy-lvl').innerText = `Lv.${battle.enemy.lvl}`;
+            document.getElementById('enemy-type-badge').innerText = battle.enemy.type;
+            document.getElementById('enemy-sprite').src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${battle.enemy.id}.gif`;
+
+            renderMoves();
+            updateHpDisplay();
+        }
+
+        function renderMoves() {
+            const grid = document.getElementById('moves-grid');
+            grid.innerHTML = "";
+            battle.player.moves.forEach(mName => {
+                const m = MOVES[mName] || { name: mName, type: "Normal", power: 60, color: "#94a3b8" };
+                const btn = document.createElement('button');
+                btn.className = "p-2.5 rounded-xl glass-panel flex flex-col text-left hover:border-indigo-500/50 active:scale-95 transition";
+                btn.onclick = () => executePlayerMove(m);
+                btn.innerHTML = `
+                    <span class="text-[9px] font-bold text-white">${m.name}</span>
+                    <span class="text-[7.5px] font-mono mt-0.5" style="color:${m.color}">${m.type} • PWR ${m.power}</span>
+                `;
+                grid.appendChild(btn);
+            });
+        }
+
+        function updateHpDisplay() {
+            const pPct = Math.max(0, (battle.player.currentHp / battle.player.maxHp) * 100);
+            const ePct = Math.max(0, (battle.enemy.currentHp / battle.enemy.maxHp) * 100);
+
+            const pBar = document.getElementById('player-hp-bar');
+            pBar.style.width = `${pPct}%`;
+            pBar.className = `h-full rounded-full transition-all duration-500 ${pPct > 50 ? 'bg-emerald-400' : pPct > 20 ? 'bg-amber-400' : 'bg-rose-500'}`;
+            document.getElementById('player-hp-text').innerText = `${battle.player.currentHp} / ${battle.player.maxHp}`;
+
+            const eBar = document.getElementById('enemy-hp-bar');
+            eBar.style.width = `${ePct}%`;
+            eBar.className = `h-full rounded-full transition-all duration-500 ${ePct > 50 ? 'bg-emerald-400' : ePct > 20 ? 'bg-amber-400' : 'bg-rose-500'}`;
+            document.getElementById('enemy-hp-text').innerText = `${Math.round(ePct)}%`;
+        }
+
+        // BATTLE TURN EXECUTION[cite: 3, 4]
+        async function executePlayerMove(move) {
+            if (battle.isTurnLocked || battle.player.currentHp <= 0 || battle.enemy.currentHp <= 0) return;
+            battle.isTurnLocked = true;
+
+            const pSprite = document.getElementById('player-sprite');
+            const eSprite = document.getElementById('enemy-sprite');
+            const arena = document.getElementById('battle-arena');
+            const log = document.getElementById('battle-log');
+
+            pSprite.classList.add('anim-lunge-player');
+            log.innerText = `${battle.player.name} used ${move.name}!`;
+            playSfx('hit');
+
+            setTimeout(() => {
+                pSprite.classList.remove('anim-lunge-player');
+                
+                // Damage Calculation[cite: 4]
+                const mult = (TYPE_CHART[move.type] && TYPE_CHART[move.type][battle.enemy.type]) !== undefined 
+                             ? TYPE_CHART[move.type][battle.enemy.type] : 1.0;
+                const dmg = Math.round((move.power * 0.75 + Math.random() * 8) * mult);
+                battle.enemy.currentHp = Math.max(0, battle.enemy.currentHp - dmg);
+                updateHpDisplay();
+
+                eSprite.classList.add('flash-fx');
+                arena.classList.add('shake-fx');
+                if (mult > 1.0) playSfx('super'); else playSfx('hit');
+
+                setTimeout(() => {
+                    eSprite.classList.remove('flash-fx');
+                    arena.classList.remove('shake-fx');
+                    if (mult > 1.0) log.innerText = "It's super effective! 💥";
+
+                    if (battle.enemy.currentHp <= 0) {
+                        log.innerText = `Enemy ${battle.enemy.name} fainted! Stadium Victory! 🏆`;
+                        playSfx('faint');
+                        eSprite.style.opacity = '0';
+                        return;
+                    }
+
+                    setTimeout(executeEnemyMove, 1000);
+                }, 400);
+            }, 350);
+        }
+
+        function executeEnemyMove() {
+            const pSprite = document.getElementById('player-sprite');
+            const eSprite = document.getElementById('enemy-sprite');
+            const arena = document.getElementById('battle-arena');
+            const log = document.getElementById('battle-log');
+
+            const mName = battle.enemy.moves[Math.floor(Math.random() * battle.enemy.moves.length)];
+            const move = MOVES[mName] || { name: mName, type: battle.enemy.type, power: 75 };
+
+            eSprite.classList.add('anim-lunge-enemy');
+            log.innerText = `Enemy ${battle.enemy.name} used ${move.name}!`;
+            playSfx('hit');
+
+            setTimeout(() => {
+                eSprite.classList.remove('anim-lunge-enemy');
+
+                const mult = (TYPE_CHART[move.type] && TYPE_CHART[move.type][battle.player.type]) !== undefined 
+                             ? TYPE_CHART[move.type][battle.player.type] : 1.0;
+                const dmg = Math.round((move.power * 0.7 + Math.random() * 8) * mult);
+                battle.player.currentHp = Math.max(0, battle.player.currentHp - dmg);
+                updateHpDisplay();
+
+                pSprite.classList.add('flash-fx');
+                arena.classList.add('shake-fx');
+
+                setTimeout(() => {
+                    pSprite.classList.remove('flash-fx');
+                    arena.classList.remove('shake-fx');
+
+                    if (battle.player.currentHp <= 0) {
+                        log.innerText = `${battle.player.name} fainted! Challenge Failed.`;
+                        playSfx('faint');
+                        pSprite.style.opacity = '0';
+                        return;
+                    }
+
+                    battle.isTurnLocked = false;
+                    log.innerText = `What will ${battle.player.name} do?`;
+                }, 400);
+            }, 350);
+        }
+
+        // GYM SELECTION LOGIC[cite: 4]
+        function openGymMenu() {
+            const list = document.getElementById('gym-list');
+            list.innerHTML = "";
+            GYMS.forEach((gym, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full p-3 rounded-xl glass-panel flex items-center justify-between text-left hover:border-indigo-500 active:scale-95 transition";
+                btn.onclick = () => selectGym(idx);
+                btn.innerHTML = `
+                    <div>
+                        <span class="text-[10px] text-white font-bold block">${gym.name}</span>
+                        <span class="text-[8px] text-gray-400 font-sans">Leader ${gym.leader} • ${gym.boss} (Lv.${gym.lvl})</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-indigo-400 text-xs"></i>
+                `;
+                list.appendChild(btn);
+            });
+            document.getElementById('gym-modal').classList.remove('hidden');
+            document.getElementById('gym-modal').classList.add('flex');
+        }
+
+        function closeGymMenu() {
+            document.getElementById('gym-modal').classList.add('hidden');
+            document.getElementById('gym-modal').classList.remove('flex');
+        }
+
+        function selectGym(idx) {
+            const g = GYMS[idx];
+            const bossTemplate = POKEDEX[g.boss] || POKEDEX.Charizard;
+            battle.enemy = { ...bossTemplate, maxHp: bossTemplate.hp * 1.2, currentHp: bossTemplate.hp * 1.2, lvl: g.lvl };
+            document.getElementById('league-badge').innerText = `${g.name} Arena`;
+            document.getElementById('enemy-sprite').style.opacity = '1';
+            initBattleView();
+            closeGymMenu();
+        }
+
+        window.addEventListener('DOMContentLoaded', initBattleView);
+    </script>
+</body>
+</html>
