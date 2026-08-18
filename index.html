@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Pokémon Champions | Ultimate Stadium Battle</title>
-    
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#030308">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#050508">
 
     <!-- Fonts & Libraries -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Plus+Jakarta+Sans:wght@600;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
@@ -20,6 +17,7 @@
         :root {
             --sat: env(safe-area-inset-top, 0px);
             --sab: env(safe-area-inset-bottom, 0px);
+            --vfx-color: #6366f1;
         }
 
         * {
@@ -38,53 +36,71 @@
             overflow: hidden;
         }
 
-        /* 3D STADIUM PERSPECTIVE */
-        .stadium-stage {
-            perspective: 1200px;
-            background: radial-gradient(circle at 50% 20%, rgba(99, 102, 241, 0.2) 0%, #030308 80%);
+        .pixel-art {
+            image-rendering: pixelated;
         }
 
+        /* 3D STADIUM PERSPECTIVE CAMERA */
+        .stadium-stage {
+            perspective: 1100px;
+            background: radial-gradient(circle at 50% 20%, rgba(99, 102, 241, 0.25) 0%, #030308 80%);
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
+        }
+
+        .cam-zoom-player { transform: scale(1.15) translateY(30px) rotateX(10deg); }
+        .cam-zoom-enemy { transform: scale(1.15) translateY(-30px) rotateX(-5deg); }
+
         .battle-pitch {
-            transform: rotateX(58deg) translateZ(-40px);
+            transform: rotateX(56deg) translateZ(-40px);
             background: radial-gradient(ellipse at center, #0f172a 15%, #020617 85%);
             border: 4px solid rgba(99, 102, 241, 0.35);
-            box-shadow: 0 0 100px rgba(99, 102, 241, 0.25), inset 0 0 80px rgba(0, 0, 0, 0.9);
+            box-shadow: 0 0 100px rgba(99, 102, 241, 0.3), inset 0 0 80px rgba(0, 0, 0, 0.9);
+            transition: all 0.4s ease;
         }
+
+        /* ENVIRONMENT FLOORS */
+        .floor-rock { background: radial-gradient(circle, #78716c 20%, #292524 80%); border-color: #a8a29e; }
+        .floor-water { background: radial-gradient(circle, #0284c7 20%, #082f49 80%); border-color: #38bdf8; }
+        .floor-electric { background: radial-gradient(circle, #eab308 20%, #422006 80%); border-color: #facc15; }
+        .floor-grass { background: radial-gradient(circle, #16a34a 20%, #052e16 80%); border-color: #4ade80; }
+        .floor-fire { background: radial-gradient(circle, #dc2626 20%, #450a0a 80%); border-color: #f87171; }
+        .floor-psychic { background: radial-gradient(circle, #9333ea 20%, #3b0764 80%); border-color: #c084fc; }
+        .floor-dragon { background: radial-gradient(circle, #4f46e5 20%, #1e1b4b 80%); border-color: #818cf8; }
 
         /* SPRITE ANIMATIONS */
         .pokemon-sprite {
-            image-rendering: pixelated;
-            filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.75));
+            filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.8));
+            transition: transform 0.3s ease, filter 0.3s ease;
         }
 
         @keyframes sprite-idle {
             0%, 100% { transform: translateY(0) scale(1); }
             50% { transform: translateY(-8px) scale(1.03); }
         }
-        .anim-idle { animation: sprite-idle 2.4s ease-in-out infinite; }
+        .anim-idle { animation: sprite-idle 2.5s ease-in-out infinite; }
 
         @keyframes lunge-right {
             0% { transform: translateX(0) scale(1); }
-            50% { transform: translateX(70px) scale(1.18); }
+            50% { transform: translateX(70px) scale(1.2) rotate(5deg); }
             100% { transform: translateX(0) scale(1); }
         }
         .anim-lunge-player { animation: lunge-right 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
         @keyframes lunge-left {
             0% { transform: translateX(0) scale(1); }
-            50% { transform: translateX(-70px) scale(1.18); }
+            50% { transform: translateX(-70px) scale(1.2) rotate(-5deg); }
             100% { transform: translateX(0) scale(1); }
         }
         .anim-lunge-enemy { animation: lunge-left 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
         @keyframes screen-shake {
             0%, 100% { transform: translate(0, 0); }
-            20% { transform: translate(-12px, 10px) rotate(-1deg); }
-            40% { transform: translate(12px, -10px) rotate(1deg); }
-            60% { transform: translate(-6px, 6px); }
-            80% { transform: translate(6px, -6px); }
+            20% { transform: translate(-15px, 12px) rotate(-1deg); }
+            40% { transform: translate(15px, -12px) rotate(1deg); }
+            60% { transform: translate(-8px, 6px); }
+            80% { transform: translate(8px, -6px); }
         }
-        .shake-fx { animation: screen-shake 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+        .shake-hard { animation: screen-shake 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
 
         @keyframes damage-flash {
             0%, 100% { filter: brightness(1); }
@@ -92,12 +108,53 @@
         }
         .flash-fx { animation: damage-flash 0.3s ease-out; }
 
-        /* Glassmorphism Panel */
+        /* VFX SHOCKWAVES & SLASHES */
+        @keyframes shockwave-grow {
+            0% { transform: translate(-50%, -50%) scale(0.1); opacity: 1; border-width: 20px; }
+            100% { transform: translate(-50%, -50%) scale(5); opacity: 0; border-width: 0px; }
+        }
+        .vfx-shockwave {
+            position: absolute; width: 100px; height: 100px; border-radius: 50%;
+            border: 2px solid white; background: radial-gradient(circle, var(--vfx-color) 0%, transparent 80%);
+            animation: shockwave-grow 0.4s ease-out forwards; z-index: 60; mix-blend-mode: screen;
+        }
+
+        @keyframes slash-strike {
+            0% { width: 0; opacity: 1; transform: translate(-50%, -50%) rotate(-35deg) scaleX(1); }
+            50% { width: 140%; opacity: 1; }
+            100% { width: 140%; opacity: 0; transform: translate(-50%, -50%) rotate(-35deg) scaleX(0); }
+        }
+        .vfx-slash {
+            position: absolute; height: 10px; background: #ffffff;
+            box-shadow: 0 0 20px #ffffff, 0 0 40px var(--vfx-color);
+            z-index: 65; animation: slash-strike 0.35s ease-out forwards; border-radius: 6px;
+        }
+
+        /* EVOLUTION & CATCH CINEMATICS */
+        @keyframes throw-arc {
+            0% { left: 20%; bottom: 25%; transform: scale(0.6) rotate(0deg); opacity: 1; }
+            50% { transform: scale(1.3) rotate(360deg) translateY(-140px); }
+            100% { left: 75%; bottom: 65%; transform: scale(0.7) rotate(720deg); opacity: 1; }
+        }
+        .anim-throw { animation: throw-arc 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+
+        @keyframes ball-shake {
+            0%, 100% { transform: rotate(0deg) scale(0.7); }
+            25% { transform: rotate(-25deg) scale(0.7); }
+            75% { transform: rotate(25deg) scale(0.7); }
+        }
+        .anim-wiggle { animation: ball-shake 0.45s ease-in-out; }
+
+        @keyframes evo-glow-burst {
+            0%, 100% { filter: brightness(1) drop-shadow(0 0 10px white); }
+            50% { filter: brightness(10) drop-shadow(0 0 60px #818cf8); transform: scale(1.15); }
+        }
+        .anim-evo { animation: evo-glow-burst 0.6s infinite; }
+
         .glass-panel {
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.09);
         }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -105,7 +162,7 @@
 </head>
 <body class="flex flex-col relative select-none">
 
-    <!-- TOP HEADER -->
+    <!-- HEADER / NAVIGATION -->
     <header class="h-14 pt-[var(--sat)] px-4 flex items-center justify-between shrink-0 z-40 bg-[#070913]/95 border-b border-white/5">
         <div class="flex items-center gap-2.5">
             <div class="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 text-xs">
@@ -113,7 +170,7 @@
             </div>
             <div>
                 <h1 class="text-xs text-white leading-tight">POKÉMON <span class="text-indigo-400">CHAMPIONS</span></h1>
-                <span id="league-badge" class="text-[8px] text-gray-400 font-sans">Kanto League Arena</span>
+                <span id="league-title" class="text-[8px] text-gray-400 font-sans">Kanto Champion League</span>
             </div>
         </div>
 
@@ -122,18 +179,24 @@
                 <i class="fa-solid fa-volume-xmark text-rose-400" id="audio-icon"></i>
                 <span id="audio-text">Audio: OFF</span>
             </button>
-            <button onclick="openGymMenu()" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 active:bg-indigo-500 text-[9px] text-white font-bold transition">
+            <button onclick="openModal('gym-modal')" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-[9px] text-white font-bold transition shadow-lg shadow-indigo-600/20">
                 <i class="fa-solid fa-trophy mr-1"></i> Gyms
+            </button>
+            <button onclick="openModal('party-modal')" class="px-2.5 py-1.5 rounded-lg glass-panel text-[9px] text-purple-300 font-bold transition">
+                <i class="fa-solid fa-users mr-1"></i> Team
             </button>
         </div>
     </header>
 
-    <!-- MAIN BATTLE ARENA -->
+    <!-- 3D BATTLE ARENA VIEWPORT -->
     <main id="battle-arena" class="flex-1 stadium-stage relative overflow-hidden flex flex-col justify-between p-4 pb-2">
         
-        <!-- ENEMY HUD & SPRITE -->
+        <!-- VFX Overlay Layer -->
+        <div id="vfx-layer" class="absolute inset-0 pointer-events-none z-30"></div>
+
+        <!-- ENEMY HUD & SPRITE[cite: 4] -->
         <div class="w-full flex justify-between items-start max-w-xl mx-auto z-20 px-2">
-            <div class="glass-panel p-3 rounded-2xl w-52 sm:w-60 border-rose-500/20 shadow-2xl">
+            <div class="glass-panel p-3 rounded-2xl w-56 border-rose-500/20 shadow-2xl">
                 <div class="flex justify-between items-center text-[9px] mb-1">
                     <span id="enemy-name" class="font-bold text-rose-400">CHARIZARD</span>
                     <span id="enemy-lvl" class="text-gray-400 font-mono">Lv.85</span>
@@ -142,32 +205,32 @@
                     <div id="enemy-hp-bar" class="h-full bg-emerald-400 rounded-full w-full transition-all duration-500"></div>
                 </div>
                 <div class="flex justify-between items-center text-[8px] mt-1 text-gray-400 font-mono">
-                    <span id="enemy-type-badge" class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300">FIRE</span>
+                    <div id="enemy-types-container" class="flex gap-1"></div>
                     <span id="enemy-hp-text">100%</span>
                 </div>
             </div>
 
             <div class="relative w-36 h-36 flex items-center justify-center">
-                <div class="absolute bottom-2 w-28 h-8 rounded-full bg-black/50 blur-md -z-10"></div>
-                <img id="enemy-sprite" class="pokemon-sprite anim-idle w-32 h-32 object-contain" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/6.gif" alt="Enemy">
+                <div class="absolute bottom-2 w-28 h-8 rounded-full bg-black/60 blur-md -z-10"></div>
+                <img id="enemy-sprite" class="pokemon-sprite pixel-art anim-idle w-32 h-32 object-contain" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/6.gif" alt="Enemy">
             </div>
         </div>
 
-        <!-- 3D PITCH FIELD -->
-        <div class="absolute inset-x-6 top-1/3 bottom-20 battle-pitch rounded-[40px] -z-10 flex items-center justify-center">
+        <!-- 3D PITCH FIELD[cite: 6] -->
+        <div id="pitch-platform" class="absolute inset-x-6 top-1/3 bottom-20 battle-pitch rounded-[44px] -z-10 flex items-center justify-center">
             <div class="w-24 h-24 rounded-full border-2 border-indigo-500/30 flex items-center justify-center">
-                <div class="w-8 h-8 rounded-full bg-indigo-500/20"></div>
+                <div class="w-8 h-8 rounded-full bg-indigo-500/20 animate-pulse"></div>
             </div>
         </div>
 
-        <!-- PLAYER HUD & SPRITE -->
+        <!-- PLAYER HUD & SPRITE[cite: 4] -->
         <div class="w-full flex justify-between items-end max-w-xl mx-auto z-20 px-2">
             <div class="relative w-36 h-36 flex items-center justify-center">
-                <div class="absolute bottom-2 w-28 h-8 rounded-full bg-black/50 blur-md -z-10"></div>
-                <img id="player-sprite" class="pokemon-sprite anim-idle w-32 h-32 object-contain" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/back/9.gif" alt="Player">
+                <div class="absolute bottom-2 w-28 h-8 rounded-full bg-black/60 blur-md -z-10"></div>
+                <img id="player-sprite" class="pokemon-sprite pixel-art anim-idle w-32 h-32 object-contain" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/back/9.gif" alt="Player">
             </div>
 
-            <div class="glass-panel p-3 rounded-2xl w-52 sm:w-60 border-indigo-500/30 shadow-2xl mb-2">
+            <div class="glass-panel p-3 rounded-2xl w-56 border-indigo-500/30 shadow-2xl mb-2">
                 <div class="flex justify-between items-center text-[9px] mb-1">
                     <span id="player-name" class="font-bold text-indigo-400">BLASTOISE</span>
                     <span id="player-lvl" class="text-gray-400 font-mono">Lv.85</span>
@@ -176,38 +239,49 @@
                     <div id="player-hp-bar" class="h-full bg-emerald-400 rounded-full w-full transition-all duration-500"></div>
                 </div>
                 <div class="flex justify-between items-center text-[8px] mt-1 text-gray-400 font-mono">
-                    <span id="player-type-badge" class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300">WATER</span>
+                    <div id="player-types-container" class="flex gap-1"></div>
                     <span id="player-hp-text">280 / 280</span>
+                </div>
+                <div class="w-full h-1 bg-white/5 rounded-full overflow-hidden mt-1.5">
+                    <div id="player-exp-bar" class="h-full bg-indigo-400 w-0 transition-all duration-300"></div>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- CONTROL FOOTER -->
+    <!-- ACTION CONTROL FOOTER -->
     <footer class="h-44 bg-[#05060d]/95 border-t border-white/10 p-3 flex flex-col justify-between max-w-2xl mx-auto w-full z-40">
         <div id="battle-log" class="text-[9px] leading-relaxed text-indigo-200 h-8 flex items-center px-3 rounded-xl bg-white/5 font-mono border border-white/5 overflow-hidden">
             Champion Stadium Match Started!
         </div>
 
-        <div id="moves-grid" class="grid grid-cols-2 gap-2 mt-2">
-            <!-- Dynamic Move Buttons injected via JS -->
-        </div>
+        <!-- 4-Attack Moves Grid -->
+        <div id="moves-grid" class="grid grid-cols-2 gap-2 mt-2"></div>
     </footer>
 
-    <!-- GYM SELECTION MODAL -->
+    <!-- GYM STADIUM SELECTION MODAL[cite: 4] -->
     <div id="gym-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
         <div class="glass-panel w-full max-w-md p-5 rounded-3xl space-y-4 max-h-[85vh] flex flex-col">
             <div class="flex items-center justify-between border-b border-white/10 pb-3">
-                <span class="text-xs text-indigo-400 font-bold">SELECT GYM CHALLENGE</span>
-                <button onclick="closeGymMenu()" class="text-gray-400 hover:text-white text-xs">✕</button>
+                <span class="text-xs text-indigo-400 font-bold">STADIUM GYM LEAGUES</span>
+                <button onclick="closeModal('gym-modal')" class="text-gray-400 hover:text-white text-xs">✕</button>
             </div>
-            <div id="gym-list" class="space-y-2 overflow-y-auto pr-1 no-scrollbar flex-1">
-                <!-- Gyms injected via JS -->
-            </div>
+            <div id="gym-list" class="space-y-2 overflow-y-auto pr-1 no-scrollbar flex-1"></div>
         </div>
     </div>
 
-    <!-- ENGINE DATA & GAME LOGIC -->
+    <!-- PARTY & ROSTER MODAL -->
+    <div id="party-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-md p-5 rounded-3xl space-y-4 max-h-[85vh] flex flex-col">
+            <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                <span class="text-xs text-purple-400 font-bold">CHAMPION ROSTER</span>
+                <button onclick="closeModal('party-modal')" class="text-gray-400 hover:text-white text-xs">✕</button>
+            </div>
+            <div id="party-list" class="space-y-2 overflow-y-auto pr-1 no-scrollbar flex-1"></div>
+        </div>
+    </div>
+
+    <!-- COMPLETE POKÉMON ENGINE & FULL DATASET[cite: 4] -->
     <script>
         // TYPE EFFECTIVENESS TABLE[cite: 4]
         const TYPE_CHART = {
@@ -232,93 +306,174 @@
             God: { Normal: 1, Fire: 1, Water: 1, Grass: 1, Electric: 1, Ice: 1, Fighting: 1, Poison: 1, Ground: 1, Flying: 1, Psychic: 1, Bug: 1, Rock: 1, Ghost: 1, Dragon: 1, Steel: 1, Dark: 1, Fairy: 1 }
         };
 
-        // MOVE DATABASE[cite: 4]
+        // FULL MOVES DATABASE[cite: 4]
         const MOVES = {
-            "Hydro Pump": { name: "Hydro Pump", type: "Water", power: 110, color: "#38bdf8" },
-            "Ice Beam": { name: "Ice Beam", type: "Ice", power: 90, color: "#67e8f9" },
-            "Flash Cannon": { name: "Flash Cannon", type: "Steel", power: 80, color: "#94a3b8" },
-            "Skull Bash": { name: "Skull Bash", type: "Normal", power: 130, color: "#f59e0b" },
-            "Flamethrower": { name: "Flamethrower", type: "Fire", power: 90, color: "#ef4444" },
-            "Air Slash": { name: "Air Slash", type: "Flying", power: 75, color: "#a855f7" },
-            "Dragon Claw": { name: "Dragon Claw", type: "Dragon", power: 80, color: "#6366f1" },
-            "Fire Blast": { name: "Fire Blast", type: "Fire", power: 110, color: "#f97316" },
-            "Solar Beam": { name: "Solar Beam", type: "Grass", power: 120, color: "#22c55e" },
-            "Earthquake": { name: "Earthquake", type: "Ground", power: 100, color: "#eab308" },
-            "Thunderbolt": { name: "Thunderbolt", type: "Electric", power: 90, color: "#facc15" },
-            "Thunder": { name: "Thunder", type: "Electric", power: 110, color: "#eab308" },
-            "Shadow Ball": { name: "Shadow Ball", type: "Ghost", power: 80, color: "#a855f7" },
-            "Psychic": { name: "Psychic", type: "Psychic", power: 90, color: "#ec4899" },
-            "Dragon Ascent": { name: "Dragon Ascent", type: "Flying", power: 120, color: "#3b82f6" },
-            "Judgment": { name: "Judgment", type: "God", power: 100, color: "#e2e8f0" }
+            "Tackle": { name: "Tackle", type: "Normal", category: "Physical", power: 40, accuracy: 1, priority: 0, pp: 35 },
+            "Scratch": { name: "Scratch", type: "Normal", category: "Physical", power: 40, accuracy: 1, priority: 0, pp: 35 },
+            "Quick Attack": { name: "Quick Attack", type: "Normal", category: "Physical", power: 40, accuracy: 1, priority: 1, pp: 30 },
+            "Slash": { name: "Slash", type: "Normal", category: "Physical", power: 70, accuracy: 1, priority: 0, pp: 20 },
+            "Vine Whip": { name: "Vine Whip", type: "Grass", category: "Physical", power: 45, accuracy: 1, priority: 0, pp: 25 },
+            "Razor Leaf": { name: "Razor Leaf", type: "Grass", category: "Physical", power: 55, accuracy: 0.95, priority: 0, pp: 25 },
+            "Solar Beam": { name: "Solar Beam", type: "Grass", category: "Special", power: 120, accuracy: 1, priority: 0, pp: 10 },
+            "Flower Trick": { name: "Flower Trick", type: "Grass", category: "Physical", power: 70, accuracy: 1, priority: 0, pp: 10 },
+            "Ember": { name: "Ember", type: "Fire", category: "Special", power: 40, accuracy: 1, priority: 0, pp: 25 },
+            "Flamethrower": { name: "Flamethrower", type: "Fire", category: "Special", power: 90, accuracy: 1, priority: 0, pp: 15 },
+            "Fire Blast": { name: "Fire Blast", type: "Fire", category: "Special", power: 110, accuracy: 0.85, priority: 0, pp: 5 },
+            "Sacred Fire": { name: "Sacred Fire", type: "Fire", category: "Physical", power: 100, accuracy: 0.95, priority: 0, pp: 5 },
+            "Torch Song": { name: "Torch Song", type: "Fire", category: "Special", power: 80, accuracy: 1, priority: 0, pp: 10 },
+            "Water Gun": { name: "Water Gun", type: "Water", category: "Special", power: 40, accuracy: 1, priority: 0, pp: 25 },
+            "Hydro Pump": { name: "Hydro Pump", type: "Water", category: "Special", power: 110, accuracy: 0.8, priority: 0, pp: 5 },
+            "Surf": { name: "Surf", type: "Water", category: "Special", power: 90, accuracy: 1, priority: 0, pp: 15 },
+            "Water Shuriken": { name: "Water Shuriken", type: "Water", category: "Special", power: 60, accuracy: 1, priority: 1, pp: 20 },
+            "Aqua Step": { name: "Aqua Step", type: "Water", category: "Physical", power: 80, accuracy: 1, priority: 0, pp: 10 },
+            "Thunder Shock": { name: "Thunder Shock", type: "Electric", category: "Special", power: 40, accuracy: 1, priority: 0, pp: 30 },
+            "Thunderbolt": { name: "Thunderbolt", type: "Electric", category: "Special", power: 90, accuracy: 1, priority: 0, pp: 15 },
+            "Thunder": { name: "Thunder", type: "Electric", category: "Special", power: 110, accuracy: 0.7, priority: 0, pp: 10 },
+            "Ice Beam": { name: "Ice Beam", type: "Ice", category: "Special", power: 90, accuracy: 1, priority: 0, pp: 10 },
+            "Blizzard": { name: "Blizzard", type: "Ice", category: "Special", power: 110, accuracy: 0.7, priority: 0, pp: 5 },
+            "Rock Throw": { name: "Rock Throw", type: "Rock", category: "Physical", power: 50, accuracy: 0.9, priority: 0, pp: 15 },
+            "Earthquake": { name: "Earthquake", type: "Ground", category: "Physical", power: 100, accuracy: 1, priority: 0, pp: 10 },
+            "Dragon Rush": { name: "Dragon Rush", type: "Dragon", category: "Physical", power: 100, accuracy: 0.75, priority: 0, pp: 10 },
+            "Shadow Ball": { name: "Shadow Ball", type: "Ghost", category: "Special", power: 80, accuracy: 1, priority: 0, pp: 15 },
+            "Psychic": { name: "Psychic", type: "Psychic", category: "Special", power: 90, accuracy: 1, priority: 0, pp: 10 },
+            "Hyper Beam": { name: "Hyper Beam", type: "Normal", category: "Special", power: 150, accuracy: 0.9, priority: 0, pp: 5 },
+            "Wing Attack": { name: "Wing Attack", type: "Flying", category: "Physical", power: 60, accuracy: 1, priority: 0, pp: 35 },
+            "Aeroblast": { name: "Aeroblast", type: "Flying", category: "Special", power: 100, accuracy: 0.95, priority: 0, pp: 5 },
+            "Brave Bird": { name: "Brave Bird", type: "Flying", category: "Physical", power: 120, accuracy: 1, priority: 0, pp: 15 },
+            "Dragon Claw": { name: "Dragon Claw", type: "Dragon", category: "Physical", power: 80, accuracy: 1, priority: 0, pp: 15 },
+            "Outrage": { name: "Outrage", type: "Dragon", category: "Physical", power: 120, accuracy: 1, priority: 0, pp: 10 },
+            "Flash Cannon": { name: "Flash Cannon", type: "Steel", category: "Special", power: 80, accuracy: 1, priority: 0, pp: 10 },
+            "Iron Tail": { name: "Iron Tail", type: "Steel", category: "Physical", power: 100, accuracy: 0.75, priority: 0, pp: 15 },
+            "Gigaton Hammer": { name: "Gigaton Hammer", type: "Steel", category: "Physical", power: 160, accuracy: 1, priority: 0, pp: 5 },
+            "Moonblast": { name: "Moonblast", type: "Fairy", category: "Special", power: 95, accuracy: 1, priority: 0, pp: 15 },
+            "Play Rough": { name: "Play Rough", type: "Fairy", category: "Physical", power: 90, accuracy: 0.9, priority: 0, pp: 10 },
+            "Dark Pulse": { name: "Dark Pulse", type: "Dark", category: "Special", power: 80, accuracy: 1, priority: 0, pp: 15 },
+            "Night Slash": { name: "Night Slash", type: "Dark", category: "Physical", power: 70, accuracy: 1, priority: 0, pp: 15 },
+            "Aura Sphere": { name: "Aura Sphere", type: "Fighting", category: "Special", power: 80, accuracy: 1, priority: 0, pp: 20 },
+            "Close Combat": { name: "Close Combat", type: "Fighting", category: "Physical", power: 120, accuracy: 1, priority: 0, pp: 5 },
+            "Judgment": { name: "Judgment", type: "God", category: "Special", power: 100, accuracy: 1, priority: 0, pp: 10 },
+            "Psystrike": { name: "Psystrike", type: "Psychic", category: "Special", power: 100, accuracy: 1, priority: 0, pp: 10 },
+            "Dragon Ascent": { name: "Dragon Ascent", type: "Flying", category: "Physical", power: 120, accuracy: 1, priority: 0, pp: 5 }
         };
 
-        // POKEMON DATABASE[cite: 4]
+        // COMPLETE POKEDEX FROM EXTRACTED SOURCE[cite: 4]
         const POKEDEX = {
-            Blastoise: { id: 9, name: "Blastoise", type: "Water", hp: 280, moves: ["Hydro Pump", "Ice Beam", "Flash Cannon", "Skull Bash"] },
-            Charizard: { id: 6, name: "Charizard", type: "Fire", hp: 260, moves: ["Flamethrower", "Air Slash", "Dragon Claw", "Fire Blast"] },
-            Venusaur: { id: 3, name: "Venusaur", type: "Grass", hp: 270, moves: ["Solar Beam", "Earthquake", "Sludge Bomb", "Skull Bash"] },
-            Pikachu: { id: 25, name: "Pikachu", type: "Electric", hp: 220, moves: ["Thunderbolt", "Thunder", "Iron Tail", "Quick Attack"] },
-            Gengar: { id: 94, name: "Gengar", type: "Ghost", hp: 240, moves: ["Shadow Ball", "Sludge Bomb", "Thunderbolt", "Psychic"] },
-            Garchomp: { id: 445, name: "Garchomp", type: "Dragon", hp: 300, moves: ["Dragon Claw", "Earthquake", "Fire Blast", "Stone Edge"] },
-            Rayquaza: { id: 384, name: "Rayquaza", type: "Dragon", hp: 320, moves: ["Dragon Ascent", "Earthquake", "Flamethrower", "Outrage"] },
-            Arceus: { id: 493, name: "Arceus", type: "God", hp: 350, moves: ["Judgment", "Earthquake", "Ice Beam", "Thunderbolt"] }
+            Bulbasaur: { id: 1, name: "Bulbasaur", type: ["Grass", "Poison"], hp: 45, atk: 49, def: 49, spAtk: 65, spDef: 65, spd: 45, moves: ["Tackle", "Vine Whip", "Razor Leaf", "Solar Beam"], evolution: { level: 16, to: "Ivysaur" } },
+            Ivysaur: { id: 2, name: "Ivysaur", type: ["Grass", "Poison"], hp: 60, atk: 62, def: 63, spAtk: 80, spDef: 80, spd: 60, moves: ["Tackle", "Vine Whip", "Razor Leaf", "Solar Beam"], evolution: { level: 32, to: "Venusaur" } },
+            Venusaur: { id: 3, name: "Venusaur", type: ["Grass", "Poison"], hp: 80, atk: 82, def: 83, spAtk: 100, spDef: 100, spd: 80, moves: ["Vine Whip", "Razor Leaf", "Solar Beam", "Earthquake"] },
+            Charmander: { id: 4, name: "Charmander", type: ["Fire"], hp: 39, atk: 52, def: 43, spAtk: 60, spDef: 50, spd: 65, moves: ["Scratch", "Ember", "Slash", "Flamethrower"], evolution: { level: 16, to: "Charmeleon" } },
+            Charmeleon: { id: 5, name: "Charmeleon", type: ["Fire"], hp: 58, atk: 64, def: 58, spAtk: 80, spDef: 65, spd: 80, moves: ["Scratch", "Ember", "Slash", "Flamethrower"], evolution: { level: 36, to: "Charizard" } },
+            Charizard: { id: 6, name: "Charizard", type: ["Fire", "Flying"], hp: 78, atk: 84, def: 78, spAtk: 109, spDef: 85, spd: 100, moves: ["Flamethrower", "Wing Attack", "Fire Blast", "Dragon Claw"] },
+            Squirtle: { id: 7, name: "Squirtle", type: ["Water"], hp: 44, atk: 48, def: 65, spAtk: 50, spDef: 64, spd: 43, moves: ["Tackle", "Water Gun", "Surf", "Hydro Pump"], evolution: { level: 16, to: "Wartortle" } },
+            Wartortle: { id: 8, name: "Wartortle", type: ["Water"], hp: 59, atk: 63, def: 80, spAtk: 65, spDef: 80, spd: 58, moves: ["Tackle", "Water Gun", "Surf", "Hydro Pump"], evolution: { level: 36, to: "Blastoise" } },
+            Blastoise: { id: 9, name: "Blastoise", type: ["Water"], hp: 79, atk: 83, def: 100, spAtk: 85, spDef: 105, spd: 78, moves: ["Surf", "Ice Beam", "Hydro Pump", "Flash Cannon"] },
+            Sprigatito: { id: 906, name: "Sprigatito", type: ["Grass"], hp: 40, atk: 61, def: 54, spAtk: 45, spDef: 45, spd: 65, moves: ["Scratch", "Razor Leaf", "Flower Trick", "Solar Beam"], evolution: { level: 16, to: "Floragato" } },
+            Meowscarada: { id: 908, name: "Meowscarada", type: ["Grass", "Dark"], hp: 76, atk: 110, def: 70, spAtk: 81, spDef: 70, spd: 123, moves: ["Flower Trick", "Night Slash", "Play Rough", "Solar Beam"] },
+            Fuecoco: { id: 909, name: "Fuecoco", type: ["Fire"], hp: 67, atk: 45, def: 59, spAtk: 63, spDef: 40, spd: 36, moves: ["Tackle", "Ember", "Flamethrower", "Fire Blast"], evolution: { level: 16, to: "Crocalor" } },
+            Skeledirge: { id: 911, name: "Skeledirge", type: ["Fire", "Ghost"], hp: 104, atk: 75, def: 100, spAtk: 110, spDef: 75, spd: 66, moves: ["Torch Song", "Shadow Ball", "Earthquake", "Fire Blast"] },
+            Quaxly: { id: 912, name: "Quaxly", type: ["Water"], hp: 55, atk: 65, def: 45, spAtk: 50, spDef: 45, spd: 50, moves: ["Water Gun", "Aqua Step", "Wing Attack", "Hydro Pump"], evolution: { level: 16, to: "Quaxwell" } },
+            Quaquaval: { id: 914, name: "Quaquaval", type: ["Water", "Fighting"], hp: 85, atk: 120, def: 80, spAtk: 85, spDef: 75, spd: 85, moves: ["Aqua Step", "Close Combat", "Aura Sphere", "Hydro Pump"] },
+            Lucario: { id: 448, name: "Lucario", type: ["Fighting", "Steel"], hp: 70, atk: 110, def: 70, spAtk: 115, spDef: 70, spd: 90, moves: ["Aura Sphere", "Close Combat", "Flash Cannon", "Dragon Claw"] },
+            Garchomp: { id: 445, name: "Garchomp", type: ["Dragon", "Ground"], hp: 108, atk: 130, def: 95, spAtk: 80, spDef: 85, spd: 102, moves: ["Dragon Rush", "Earthquake", "Dragon Claw", "Fire Blast"] },
+            Greninja: { id: 658, name: "Greninja", type: ["Water", "Dark"], hp: 72, atk: 95, def: 67, spAtk: 103, spDef: 71, spd: 122, moves: ["Water Shuriken", "Night Slash", "Hydro Pump", "Dark Pulse"] },
+            Tinkaton: { id: 959, name: "Tinkaton", type: ["Fairy", "Steel"], hp: 85, atk: 75, def: 77, spAtk: 70, spDef: 105, spd: 94, moves: ["Gigaton Hammer", "Play Rough", "Flash Cannon", "Rock Throw"] },
+            Dragapult: { id: 887, name: "Dragapult", type: ["Dragon", "Ghost"], hp: 88, atk: 120, def: 75, spAtk: 100, spDef: 75, spd: 142, moves: ["Dragon Claw", "Shadow Ball", "Thunderbolt", "Flamethrower"] },
+            Pikachu: { id: 25, name: "Pikachu", type: ["Electric"], hp: 35, atk: 55, def: 40, spAtk: 50, spDef: 50, spd: 90, moves: ["Thunder Shock", "Quick Attack", "Thunderbolt", "Thunder"], evolution: { level: 25, to: "Raichu" } },
+            Raichu: { id: 26, name: "Raichu", type: ["Electric"], hp: 60, atk: 90, def: 55, spAtk: 90, spDef: 80, spd: 110, moves: ["Thunderbolt", "Quick Attack", "Thunder", "Iron Tail"] },
+            Alakazam: { id: 65, name: "Alakazam", type: ["Psychic"], hp: 55, atk: 50, def: 45, spAtk: 135, spDef: 95, spd: 120, moves: ["Psychic", "Shadow Ball", "Hyper Beam", "Thunderbolt"] },
+            Gengar: { id: 94, name: "Gengar", type: ["Ghost", "Poison"], hp: 60, atk: 65, def: 60, spAtk: 130, spDef: 75, spd: 110, moves: ["Shadow Ball", "Psychic", "Thunderbolt", "Dark Pulse"] },
+            Dragonite: { id: 149, name: "Dragonite", type: ["Dragon", "Flying"], hp: 91, atk: 134, def: 95, spAtk: 100, spDef: 100, spd: 80, moves: ["Outrage", "Wing Attack", "Thunderbolt", "Fire Blast"] },
+            Mewtwo: { id: 150, name: "Mewtwo", type: ["Psychic"], hp: 106, atk: 110, def: 90, spAtk: 154, spDef: 90, spd: 130, moves: ["Psystrike", "Shadow Ball", "Ice Beam", "Aura Sphere"] },
+            Rayquaza: { id: 384, name: "Rayquaza", type: ["Dragon", "Flying"], hp: 105, atk: 150, def: 90, spAtk: 150, spDef: 90, spd: 95, moves: ["Dragon Ascent", "Outrage", "Flamethrower", "Earthquake"] },
+            Arceus: { id: 493, name: "Arceus", type: ["God"], hp: 120, atk: 120, def: 120, spAtk: 120, spDef: 120, spd: 120, moves: ["Judgment", "Hyper Beam", "Earthquake", "Shadow Ball"] }
         };
 
-        // GYM STADIUM STAGES[cite: 4]
+        // GYM LEAGUES & ARENA STAGES[cite: 4]
         const GYMS = [
-            { name: "Pewter Gym", leader: "Brock", boss: "Onix", lvl: 25 },
-            { name: "Cerulean Gym", leader: "Misty", boss: "Blastoise", lvl: 35 },
-            { name: "Vermilion Gym", leader: "Lt. Surge", boss: "Pikachu", lvl: 45 },
-            { name: "Celadon Gym", leader: "Erika", boss: "Venusaur", lvl: 55 },
-            { name: "Fuchsia Gym", leader: "Koga", boss: "Gengar", lvl: 65 },
-            { name: "Viridian Gym", leader: "Giovanni", boss: "Garchomp", lvl: 75 },
-            { name: "Sky Pillar", leader: "Zinnia", boss: "Rayquaza", lvl: 85 },
-            { name: "Hall of Origin", leader: "Champion", boss: "Arceus", lvl: 100 }
+            { id: "pewter", name: "Pewter Gym", leader: "Brock", type: "Rock", floor: "floor-rock", boss: "Onix", lvl: 25 },
+            { id: "cerulean", name: "Cerulean Gym", leader: "Misty", type: "Water", floor: "floor-water", boss: "Blastoise", lvl: 35 },
+            { id: "vermilion", name: "Vermilion Gym", leader: "Lt. Surge", type: "Electric", floor: "floor-electric", boss: "Raichu", lvl: 45 },
+            { id: "celadon", name: "Celadon Gym", leader: "Erika", type: "Grass", floor: "floor-grass", boss: "Venusaur", lvl: 55 },
+            { id: "fuchsia", name: "Fuchsia Gym", leader: "Koga", type: "Poison", floor: "floor-rock", boss: "Gengar", lvl: 65 },
+            { id: "saffron", name: "Saffron Gym", leader: "Sabrina", type: "Psychic", floor: "floor-psychic", boss: "Alakazam", lvl: 75 },
+            { id: "cinnabar", name: "Cinnabar Gym", leader: "Blaine", type: "Fire", floor: "floor-fire", boss: "Charizard", lvl: 85 },
+            { id: "viridian", name: "Viridian Gym", leader: "Giovanni", type: "Ground", floor: "floor-rock", boss: "Garchomp", lvl: 90 },
+            { id: "champion", name: "Pokémon League", leader: "Lance", type: "Dragon", floor: "floor-dragon", boss: "Rayquaza", lvl: 100 }
         ];
 
-        // GAME STATE[cite: 3, 4]
+        // GAME STATE[cite: 4]
+        function createCombatant(name, lvl, isBoss = false) {
+            const template = POKEDEX[name] || POKEDEX.Pikachu;
+            const hpStat = Math.floor((template.hp * 2 * lvl) / 100 + lvl + 10) * (isBoss ? 1.3 : 1);
+            return {
+                ...template,
+                lvl: lvl,
+                maxHp: hpStat,
+                currentHp: hpStat,
+                exp: 0,
+                nextExp: Math.pow(lvl + 1, 3)
+            };
+        }
+
+        const party = [
+            createCombatant("Blastoise", 85),
+            createCombatant("Lucario", 82),
+            createCombatant("Garchomp", 84),
+            createCombatant("Meowscarada", 83)
+        ];
+
         const battle = {
-            player: { ...POKEDEX.Blastoise, maxHp: POKEDEX.Blastoise.hp, currentHp: POKEDEX.Blastoise.hp, lvl: 85 },
-            enemy: { ...POKEDEX.Charizard, maxHp: POKEDEX.Charizard.hp, currentHp: POKEDEX.Charizard.hp, lvl: 85 },
+            player: party[0],
+            enemy: createCombatant("Charizard", 85, true),
             isTurnLocked: false
         };
 
-        // AUDIO SYNTHESIZER[cite: 3]
-        let audioOn = false;
-        let polySynth, hitNoise;
+        // CHIPTUNE SOUND GENERATOR[cite: 3]
+        let audioActive = false;
+        let synth, noise;
 
         function toggleAudio() {
-            if (!polySynth) {
-                polySynth = new Tone.PolySynth(Tone.Synth).toDestination();
-                hitNoise = new Tone.NoiseSynth().toDestination();
+            if (!synth) {
+                synth = new Tone.PolySynth(Tone.Synth).toDestination();
+                noise = new Tone.NoiseSynth().toDestination();
             }
             Tone.start();
-            audioOn = !audioOn;
-            document.getElementById('audio-text').innerText = audioOn ? "Audio: ON" : "Audio: OFF";
-            document.getElementById('audio-icon').className = audioOn ? "fa-solid fa-volume-high text-emerald-400" : "fa-solid fa-volume-xmark text-rose-400";
-            if (audioOn) polySynth.triggerAttackRelease(['C4', 'E4', 'G4'], '8n');
+            audioActive = !audioActive;
+            document.getElementById('audio-text').innerText = audioActive ? "Audio: ON" : "Audio: OFF";
+            document.getElementById('audio-icon').className = audioActive ? "fa-solid fa-volume-high text-emerald-400" : "fa-solid fa-volume-xmark text-rose-400";
+            if (audioActive) synth.triggerAttackRelease(['C4', 'E4', 'G4'], '8n');
         }
 
         function playSfx(type) {
-            if (!audioOn) return;
+            if (!audioActive) return;
             try {
-                if (type === 'hit') hitNoise.triggerAttackRelease('16n');
-                else if (type === 'super') polySynth.triggerAttackRelease(['G4', 'C5', 'E5'], '8n');
-                else if (type === 'faint') polySynth.triggerAttackRelease(['G3', 'Eb3', 'C3'], '4n');
+                if (type === 'hit') noise.triggerAttackRelease('16n');
+                else if (type === 'super') synth.triggerAttackRelease(['G4', 'C5', 'E5'], '8n');
+                else if (type === 'faint') synth.triggerAttackRelease(['G3', 'Eb3', 'C3'], '4n');
             } catch(e) {}
         }
 
-        // INITIALIZE HUD & MOVES
+        // BATTLE VIEWPORT BINDINGS[cite: 4]
         function initBattleView() {
             document.getElementById('player-name').innerText = battle.player.name;
             document.getElementById('player-lvl').innerText = `Lv.${battle.player.lvl}`;
-            document.getElementById('player-type-badge').innerText = battle.player.type;
             document.getElementById('player-sprite').src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/back/${battle.player.id}.gif`;
+            
+            const pTypes = document.getElementById('player-types-container');
+            pTypes.innerHTML = "";
+            battle.player.type.forEach(t => {
+                pTypes.innerHTML += `<span class="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[8px]">${t.toUpperCase()}</span>`;
+            });
 
             document.getElementById('enemy-name').innerText = battle.enemy.name;
             document.getElementById('enemy-lvl').innerText = `Lv.${battle.enemy.lvl}`;
-            document.getElementById('enemy-type-badge').innerText = battle.enemy.type;
             document.getElementById('enemy-sprite').src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${battle.enemy.id}.gif`;
+
+            const eTypes = document.getElementById('enemy-types-container');
+            eTypes.innerHTML = "";
+            battle.enemy.type.forEach(t => {
+                eTypes.innerHTML += `<span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 text-[8px]">${t.toUpperCase()}</span>`;
+            });
 
             renderMoves();
             updateHpDisplay();
@@ -331,10 +486,10 @@
                 const m = MOVES[mName] || { name: mName, type: "Normal", power: 60, color: "#94a3b8" };
                 const btn = document.createElement('button');
                 btn.className = "p-2.5 rounded-xl glass-panel flex flex-col text-left hover:border-indigo-500/50 active:scale-95 transition";
-                btn.onclick = () => executePlayerMove(m);
+                btn.onclick = () => executeTurn(m);
                 btn.innerHTML = `
                     <span class="text-[9px] font-bold text-white">${m.name}</span>
-                    <span class="text-[7.5px] font-mono mt-0.5" style="color:${m.color}">${m.type} • PWR ${m.power}</span>
+                    <span class="text-[7.5px] font-mono mt-0.5" style="color:${m.color || '#818cf8'}">${m.type} • PWR ${m.power}</span>
                 `;
                 grid.appendChild(btn);
             });
@@ -347,7 +502,7 @@
             const pBar = document.getElementById('player-hp-bar');
             pBar.style.width = `${pPct}%`;
             pBar.className = `h-full rounded-full transition-all duration-500 ${pPct > 50 ? 'bg-emerald-400' : pPct > 20 ? 'bg-amber-400' : 'bg-rose-500'}`;
-            document.getElementById('player-hp-text').innerText = `${battle.player.currentHp} / ${battle.player.maxHp}`;
+            document.getElementById('player-hp-text').innerText = `${Math.round(battle.player.currentHp)} / ${battle.player.maxHp}`;
 
             const eBar = document.getElementById('enemy-hp-bar');
             eBar.style.width = `${ePct}%`;
@@ -355,38 +510,48 @@
             document.getElementById('enemy-hp-text').innerText = `${Math.round(ePct)}%`;
         }
 
-        // BATTLE TURN EXECUTION[cite: 3, 4]
-        async function executePlayerMove(move) {
+        // CINEMATIC ATTACK CHOREOGRAPHY[cite: 4, 6]
+        async function executeTurn(move) {
             if (battle.isTurnLocked || battle.player.currentHp <= 0 || battle.enemy.currentHp <= 0) return;
             battle.isTurnLocked = true;
 
+            const arena = document.getElementById('battle-arena');
             const pSprite = document.getElementById('player-sprite');
             const eSprite = document.getElementById('enemy-sprite');
-            const arena = document.getElementById('battle-arena');
             const log = document.getElementById('battle-log');
 
+            // 1. Zoom Camera on Player & Strike[cite: 6]
+            arena.classList.add('cam-zoom-player');
             pSprite.classList.add('anim-lunge-player');
             log.innerText = `${battle.player.name} used ${move.name}!`;
             playSfx('hit');
 
             setTimeout(() => {
                 pSprite.classList.remove('anim-lunge-player');
-                
-                // Damage Calculation[cite: 4]
-                const mult = (TYPE_CHART[move.type] && TYPE_CHART[move.type][battle.enemy.type]) !== undefined 
-                             ? TYPE_CHART[move.type][battle.enemy.type] : 1.0;
+                arena.classList.remove('cam-zoom-player');
+
+                // 2. Damage & Type Multiplier Calculation[cite: 4]
+                let mult = 1.0;
+                battle.enemy.type.forEach(t => {
+                    if (TYPE_CHART[move.type] && TYPE_CHART[move.type][t] !== undefined) {
+                        mult *= TYPE_CHART[move.type][t];
+                    }
+                });
+
                 const dmg = Math.round((move.power * 0.75 + Math.random() * 8) * mult);
                 battle.enemy.currentHp = Math.max(0, battle.enemy.currentHp - dmg);
                 updateHpDisplay();
 
                 eSprite.classList.add('flash-fx');
-                arena.classList.add('shake-fx');
+                arena.classList.add('shake-hard');
                 if (mult > 1.0) playSfx('super'); else playSfx('hit');
 
                 setTimeout(() => {
                     eSprite.classList.remove('flash-fx');
-                    arena.classList.remove('shake-fx');
+                    arena.classList.remove('shake-hard');
+
                     if (mult > 1.0) log.innerText = "It's super effective! 💥";
+                    else if (mult < 1.0 && mult > 0) log.innerText = "It's not very effective...";
 
                     if (battle.enemy.currentHp <= 0) {
                         log.innerText = `Enemy ${battle.enemy.name} fainted! Stadium Victory! 🏆`;
@@ -395,42 +560,50 @@
                         return;
                     }
 
-                    setTimeout(executeEnemyMove, 1000);
+                    // 3. Enemy Counter-Attack[cite: 4]
+                    setTimeout(enemyTurn, 1000);
                 }, 400);
             }, 350);
         }
 
-        function executeEnemyMove() {
+        function enemyTurn() {
+            const arena = document.getElementById('battle-arena');
             const pSprite = document.getElementById('player-sprite');
             const eSprite = document.getElementById('enemy-sprite');
-            const arena = document.getElementById('battle-arena');
             const log = document.getElementById('battle-log');
 
             const mName = battle.enemy.moves[Math.floor(Math.random() * battle.enemy.moves.length)];
-            const move = MOVES[mName] || { name: mName, type: battle.enemy.type, power: 75 };
+            const move = MOVES[mName] || { name: mName, type: battle.enemy.type[0], power: 75 };
 
+            arena.classList.add('cam-zoom-enemy');
             eSprite.classList.add('anim-lunge-enemy');
             log.innerText = `Enemy ${battle.enemy.name} used ${move.name}!`;
             playSfx('hit');
 
             setTimeout(() => {
                 eSprite.classList.remove('anim-lunge-enemy');
+                arena.classList.remove('cam-zoom-enemy');
 
-                const mult = (TYPE_CHART[move.type] && TYPE_CHART[move.type][battle.player.type]) !== undefined 
-                             ? TYPE_CHART[move.type][battle.player.type] : 1.0;
+                let mult = 1.0;
+                battle.player.type.forEach(t => {
+                    if (TYPE_CHART[move.type] && TYPE_CHART[move.type][t] !== undefined) {
+                        mult *= TYPE_CHART[move.type][t];
+                    }
+                });
+
                 const dmg = Math.round((move.power * 0.7 + Math.random() * 8) * mult);
                 battle.player.currentHp = Math.max(0, battle.player.currentHp - dmg);
                 updateHpDisplay();
 
                 pSprite.classList.add('flash-fx');
-                arena.classList.add('shake-fx');
+                arena.classList.add('shake-hard');
 
                 setTimeout(() => {
                     pSprite.classList.remove('flash-fx');
-                    arena.classList.remove('shake-fx');
+                    arena.classList.remove('shake-hard');
 
                     if (battle.player.currentHp <= 0) {
-                        log.innerText = `${battle.player.name} fainted! Challenge Failed.`;
+                        log.innerText = `${battle.player.name} fainted! You lost the championship.`;
                         playSfx('faint');
                         pSprite.style.opacity = '0';
                         return;
@@ -442,13 +615,25 @@
             }, 350);
         }
 
-        // GYM SELECTION LOGIC[cite: 4]
-        function openGymMenu() {
+        // MODAL MANAGEMENT[cite: 4]
+        function openModal(id) {
+            if (id === 'gym-modal') renderGymList();
+            if (id === 'party-modal') renderPartyList();
+            document.getElementById(id).classList.remove('hidden');
+            document.getElementById(id).classList.add('flex');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+            document.getElementById(id).classList.remove('flex');
+        }
+
+        function renderGymList() {
             const list = document.getElementById('gym-list');
             list.innerHTML = "";
             GYMS.forEach((gym, idx) => {
                 const btn = document.createElement('button');
-                btn.className = "w-full p-3 rounded-xl glass-panel flex items-center justify-between text-left hover:border-indigo-500 active:scale-95 transition";
+                btn.className = "w-full p-3 rounded-2xl glass-panel flex items-center justify-between text-left hover:border-indigo-500 active:scale-95 transition";
                 btn.onclick = () => selectGym(idx);
                 btn.innerHTML = `
                     <div>
@@ -459,23 +644,48 @@
                 `;
                 list.appendChild(btn);
             });
-            document.getElementById('gym-modal').classList.remove('hidden');
-            document.getElementById('gym-modal').classList.add('flex');
-        }
-
-        function closeGymMenu() {
-            document.getElementById('gym-modal').classList.add('hidden');
-            document.getElementById('gym-modal').classList.remove('flex');
         }
 
         function selectGym(idx) {
             const g = GYMS[idx];
-            const bossTemplate = POKEDEX[g.boss] || POKEDEX.Charizard;
-            battle.enemy = { ...bossTemplate, maxHp: bossTemplate.hp * 1.2, currentHp: bossTemplate.hp * 1.2, lvl: g.lvl };
-            document.getElementById('league-badge').innerText = `${g.name} Arena`;
+            battle.enemy = createCombatant(g.boss, g.lvl, true);
+            document.getElementById('league-title').innerText = `${g.name} Arena`;
             document.getElementById('enemy-sprite').style.opacity = '1';
+            
+            // Swap Floor Arena Styling[cite: 6]
+            const pitch = document.getElementById('pitch-platform');
+            pitch.className = `absolute inset-x-6 top-1/3 bottom-20 battle-pitch rounded-[44px] -z-10 flex items-center justify-center ${g.floor}`;
+
             initBattleView();
-            closeGymMenu();
+            closeModal('gym-modal');
+        }
+
+        function renderPartyList() {
+            const list = document.getElementById('party-list');
+            list.innerHTML = "";
+            party.forEach((p, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `w-full p-3 rounded-2xl glass-panel flex items-center justify-between text-left hover:border-purple-500 active:scale-95 transition ${battle.player === p ? 'border-purple-500/50 bg-purple-950/20' : ''}`;
+                btn.onclick = () => switchActiveMon(idx);
+                btn.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png" class="w-10 h-10 pixel-art">
+                        <div>
+                            <span class="text-[10px] text-white font-bold block">${p.name} (Lv.${p.lvl})</span>
+                            <span class="text-[8px] text-gray-400 font-sans">HP: ${p.currentHp}/${p.maxHp}</span>
+                        </div>
+                    </div>
+                    <span class="text-[9px] font-mono text-purple-400 font-bold">${battle.player === p ? 'ACTIVE' : 'SELECT'}</span>
+                `;
+                list.appendChild(btn);
+            });
+        }
+
+        function switchActiveMon(idx) {
+            battle.player = party[idx];
+            document.getElementById('player-sprite').style.opacity = '1';
+            initBattleView();
+            closeModal('party-modal');
         }
 
         window.addEventListener('DOMContentLoaded', initBattleView);
