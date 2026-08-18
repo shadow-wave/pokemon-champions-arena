@@ -3,31 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Pokémon Champions | Ultimate 3D Stadium Edition</title>
+  <title>Pokémon Ultra FX | Champions Edition</title>
   
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Tone.js Audio Engine -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <!-- PeerJS for Multiplayer -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <!-- React & ReactDOM (UMD - Runs without a server) -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <!-- Babel Standalone (Compiles JSX instantly in browser) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
-  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.6/babel.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <style>
     :root {
+      --vfx-color: #ffffff;
       --sat: env(safe-area-inset-top, 0px);
       --sab: env(safe-area-inset-bottom, 0px);
-      --vfx-color: #60a5fa;
     }
 
-    * {
-      box-sizing: border-box;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-    }
+    * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 
     body {
       font-family: 'Press Start 2P', monospace;
@@ -36,6 +37,7 @@
       height: 100dvh;
       width: 100vw;
       overflow: hidden;
+      margin: 0;
     }
 
     .pixel-art {
@@ -44,1256 +46,853 @@
       image-rendering: pixelated;
     }
 
-    /* --- 3D DYNAMIC CAMERA CHOREOGRAPHY & VIEWPORT --- */
-    .perspective-viewport {
-      perspective: 1100px;
-      perspective-origin: 50% 40%;
-    }
-
-    .stadium-stage {
-      transform-style: preserve-3d;
-      transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
-    }
-
-    /* Dynamic Camera Motions */
-    .cam-intro        { transform: scale(0.92) translateY(-15px) rotateX(4deg); }
-    .cam-idle         { transform: scale(1) translateY(0px) rotateX(0deg); }
-    .cam-player-focus { transform: scale(1.22) translateY(42px) rotateX(14deg) rotateY(-6deg); }
-    .cam-enemy-focus  { transform: scale(1.22) translateY(-42px) rotateX(-10deg) rotateY(6deg); }
-    .cam-ult-zoom     { transform: scale(1.35) translateY(0px) rotateX(6deg); filter: contrast(118%) brightness(1.1); }
-
-    /* --- 3D BATTLEGROUND PITCH & PLATFORM --- */
-    .battle-pitch {
-      transform: rotateX(56deg) translateZ(-45px);
-      box-shadow: 0 0 100px rgba(99, 102, 241, 0.4), inset 0 0 90px rgba(0, 0, 0, 0.95);
-      transition: all 0.5s ease;
-      position: relative;
-    }
-
-    /* Dynamic Floor Themes */
-    .floor-grass {
-      background-color: #15803d;
-      background-image: radial-gradient(circle at center, #22c55e 10%, #15803d 70%),
-                        linear-gradient(90deg, rgba(255,255,255,0.15) 2px, transparent 2px);
-      background-size: 100% 100%, 40px 40px;
-      border: 4px solid #4ade80;
-    }
-
-    .floor-rock {
-      background-color: #292524;
-      background-image: radial-gradient(circle at center, #78716c 20%, #1c1917 80%),
-                        repeating-linear-gradient(45deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px);
-      border: 4px solid #a8a29e;
-    }
-
-    .floor-water {
-      background-color: #075985;
-      background-image: radial-gradient(circle at 50% 50%, #38bdf8 15%, #0369a1 60%, #082f49 90%);
-      background-size: 100% 100%;
-      border: 4px solid #7dd3fc;
-      box-shadow: inset 0 0 60px rgba(56, 189, 248, 0.6);
-    }
-
-    .floor-electric {
-      background-color: #422006;
-      background-image: linear-gradient(transparent 90%, rgba(250, 204, 21, 0.4) 90%),
-                        linear-gradient(90deg, transparent 90%, rgba(250, 204, 21, 0.4) 90%),
-                        radial-gradient(circle, #eab308 10%, #713f12 80%);
-      background-size: 30px 30px, 30px 30px, 100% 100%;
-      border: 4px solid #facc15;
-    }
-
-    .floor-fire {
-      background-color: #450a0a;
-      background-image: radial-gradient(circle at 50% 50%, #f97316 10%, #dc2626 50%, #450a0a 90%);
-      border: 4px solid #f87171;
-      box-shadow: 0 0 50px rgba(239, 68, 68, 0.5);
-    }
-
-    .floor-poison {
-      background-color: #3b0764;
-      background-image: radial-gradient(circle, #c084fc 15%, #7e22ce 60%, #2e1065 90%);
-      border: 4px solid #e879f9;
-    }
-
-    .floor-psychic {
-      background-color: #500724;
-      background-image: radial-gradient(circle, #f472b6 20%, #be185d 60%, #500724 90%);
-      border: 4px solid #f472b6;
-    }
-
-    .floor-dragon {
-      background-color: #1e1b4b;
-      background-image: radial-gradient(circle, #818cf8 20%, #3730a3 60%, #0f172a 90%);
-      border: 4px solid #a5b4fc;
-    }
-
-    .floor-grid {
-      background-color: #090d16;
-      background-image: linear-gradient(to right, rgba(99, 102, 241, 0.3) 1px, transparent 1px),
-                        linear-gradient(to bottom, rgba(99, 102, 241, 0.3) 1px, transparent 1px);
-      background-size: 36px 36px;
-      border: 4px solid #6366f1;
-    }
-
-    /* Pedestals */
-    .mon-pedestal {
-      position: absolute;
-      border-radius: 50%;
-      transform: rotateX(60deg);
-      box-shadow: 0 0 30px rgba(255,255,255,0.3), inset 0 0 15px rgba(255,255,255,0.5);
-    }
-
-    /* --- SPRITE IDLE & ATTACK ANIMATIONS --- */
-    @keyframes sprite-idle {
-      0%, 100% { transform: translateY(0) scale(1); filter: drop-shadow(0 18px 18px rgba(0,0,0,0.65)); }
-      50% { transform: translateY(-8px) scale(1.03); filter: drop-shadow(0 28px 28px rgba(0,0,0,0.4)); }
-    }
-    .anim-idle { animation: sprite-idle 2.6s ease-in-out infinite; }
-
-    @keyframes lunge-p2e {
-      0% { transform: translateX(0) scale(1); }
-      50% { transform: translateX(90px) translateY(-18px) scale(1.22) rotate(5deg); }
-      100% { transform: translateX(0) scale(1); }
-    }
-    .anim-lunge-player { animation: lunge-p2e 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-
-    @keyframes lunge-e2p {
-      0% { transform: translateX(0) scale(1); }
-      50% { transform: translateX(-90px) translateY(18px) scale(1.22) rotate(-5deg); }
-      100% { transform: translateX(0) scale(1); }
-    }
-    .anim-lunge-enemy { animation: lunge-e2p 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-
-    @keyframes shake-hard {
-      0%, 100% { transform: translate(0,0); }
-      20% { transform: translate(-14px, 12px) rotate(-1deg); }
-      40% { transform: translate(14px, -12px) rotate(1deg); }
-      60% { transform: translate(-8px, 6px); }
-      80% { transform: translate(8px, -6px); }
-    }
-    .shake-hard { animation: shake-hard 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
-
-    @keyframes damage-flash {
-      0%, 100% { filter: brightness(1); }
-      50% { filter: brightness(7) contrast(200%) drop-shadow(0 0 35px #ef4444); }
-    }
-    .flash-fx { animation: damage-flash 0.32s ease-out; }
-
-    /* --- VFX PROJECTILES & SHOCKWAVES --- */
-    @keyframes shockwave-grow {
-      0% { transform: translate(-50%, -50%) scale(0.1); opacity: 1; border-width: 25px; }
-      100% { transform: translate(-50%, -50%) scale(6.5); opacity: 0; border-width: 0px; }
-    }
-    .vfx-shockwave {
-      position: absolute; width: 110px; height: 110px; border-radius: 50%;
-      border: 2px solid white; background: radial-gradient(circle, var(--vfx-color) 0%, rgba(255,255,255,0.8) 40%, transparent 80%);
-      animation: shockwave-grow 0.38s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
-      z-index: 75; mix-blend-mode: screen;
-    }
-
-    /* --- CATCH & EVOLUTION --- */
-    @keyframes throw-curve {
-      0% { left: 20%; bottom: 25%; transform: scale(0.6) rotate(0deg); opacity: 1; }
-      50% { transform: scale(1.3) rotate(360deg) translateY(-140px); }
-      100% { left: 75%; bottom: 65%; transform: scale(0.65) rotate(720deg); opacity: 1; }
-    }
-    .anim-throw { animation: throw-curve 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-
-    @keyframes ball-wiggle {
-      0%, 100% { transform: rotate(0deg) scale(0.65); }
-      25% { transform: rotate(-25deg) scale(0.65); }
-      75% { transform: rotate(25deg) scale(0.65); }
-    }
-    .anim-wiggle { animation: ball-wiggle 0.45s ease-in-out; }
-
-    @keyframes evo-flash {
-      0%, 100% { filter: brightness(1); }
-      50% { filter: brightness(10) contrast(150%) drop-shadow(0 0 50px white); transform: scale(1.15); }
-    }
-    .anim-evo-flash { animation: evo-flash 0.5s ease-in-out infinite; }
-
-    /* Environment Weather Effects */
-    .anim-rain {
-      background-image: linear-gradient(to bottom, transparent, rgba(255,255,255,0.4) 60%, transparent 100%);
-      background-size: 2px 45px; animation: rain-fall 0.45s linear infinite; transform: rotate(12deg) scale(1.4);
-    }
-    @keyframes rain-fall { 0% { background-position: 0 0; } 100% { background-position: -40px 100vh; } }
-
-    /* Swaying 3D Grass Blades */
-    @keyframes grass-sway {
-      0%, 100% { transform: skewX(0deg); }
-      50% { transform: skewX(7deg); }
-    }
-    .grass-blade {
-      border-radius: 100% 0 0 0;
-      animation: grass-sway 2.8s ease-in-out infinite;
-    }
-
     .glass-panel {
       background: rgba(15, 23, 42, 0.88);
       backdrop-filter: blur(14px);
       border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
 
     .no-scrollbar::-webkit-scrollbar { display: none; }
+
+    .stadium-viewport {
+      perspective: 1000px;
+      overflow: hidden;
+    }
+
+    .camera-rig {
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.4s ease;
+    }
+
+    /* Fluid Camera States */
+    .cam-idle { transform: scale(1) translate(0, 0); }
+    .cam-p1-atk { transform: scale(1.15) translate(-5%, -8%) rotateY(3deg) rotateX(-2deg); }
+    .cam-p2-atk { transform: scale(1.15) translate(5%, 10%) rotateY(-3deg) rotateX(2deg); }
+    .cam-catch { transform: scale(1.1) translate(0, -10%); filter: contrast(110%); }
+
+    /* 3D Floor Pedestals */
+    .battle-pad {
+      position: absolute;
+      border-radius: 50%;
+      transform: rotateX(65deg);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.7), inset 0 0 20px rgba(255,255,255,0.2);
+      transition: background 1s ease, border 1s ease, box-shadow 1s ease;
+    }
+
+    .pad-player { bottom: 12%; left: 5%; width: 280px; height: 110px; z-index: 10; }
+    .pad-enemy { top: 28%; right: 10%; width: 220px; height: 85px; z-index: 5; }
+
+    /* Dynamic Environments */
+    .env-standard .battle-pad { background: radial-gradient(circle, #10b981 30%, #064e3b 80%); border: 5px solid #34d399; }
+    .env-standard .bg-layer { background: linear-gradient(to bottom, #38bdf8, #bae6fd); }
+    
+    .env-rock .battle-pad { background: radial-gradient(circle, #78716c 30%, #292524 80%); border: 5px solid #a8a29e; }
+    .env-rock .bg-layer { background: linear-gradient(to bottom, #44403c, #78716c); }
+    
+    .env-water .battle-pad { background: radial-gradient(circle, #0284c7 30%, #082f49 80%); border: 5px solid #38bdf8; box-shadow: 0 15px 35px rgba(0,0,0,0.7), inset 0 0 30px rgba(56, 189, 248, 0.5); }
+    .env-water .bg-layer { background: linear-gradient(to bottom, #0c4a6e, #0284c7); }
+    
+    .env-electric .battle-pad { background: radial-gradient(circle, #ca8a04 30%, #422006 80%); border: 5px solid #fde047; }
+    .env-electric .bg-layer { background: linear-gradient(to bottom, #1e293b, #451a03); }
+    
+    .env-fire .battle-pad { background: radial-gradient(circle, #dc2626 30%, #450a0a 80%); border: 5px solid #fca5a5; box-shadow: 0 15px 35px rgba(0,0,0,0.7), inset 0 0 40px rgba(239, 68, 68, 0.6); }
+    .env-fire .bg-layer { background: linear-gradient(to bottom, #450a0a, #991b1b); }
+    
+    .env-psychic .battle-pad { background: radial-gradient(circle, #9333ea 30%, #3b0764 80%); border: 5px solid #d8b4fe; }
+    .env-psychic .bg-layer { background: linear-gradient(to bottom, #2e1065, #7e22ce); }
+    
+    .env-poison .battle-pad { background: radial-gradient(circle, #a21caf 30%, #4a044e 80%); border: 5px solid #f0abfc; }
+    .env-poison .bg-layer { background: linear-gradient(to bottom, #1e1b4b, #4a044e); }
+    
+    .env-dragon .battle-pad { background: radial-gradient(circle, #4338ca 30%, #1e1b4b 80%); border: 5px solid #818cf8; }
+    .env-dragon .bg-layer { background: linear-gradient(to bottom, #0f172a, #312e81); }
+
+    .sprite-container {
+      position: absolute;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      transition: opacity 0.3s ease;
+    }
+    
+    .sprite-player { bottom: 18%; left: 10%; width: 200px; height: 200px; z-index: 20; }
+    .sprite-enemy { top: 15%; right: 12%; width: 160px; height: 160px; z-index: 15; }
+
+    .mon-sprite {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 15px 15px rgba(0,0,0,0.5));
+      transition: filter 0.3s ease;
+    }
+
+    @keyframes lunge-p1 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(60px, -20px) scale(1.1) rotate(5deg); }
+    }
+    .anim-lunge-p1 { animation: lunge-p1 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+
+    @keyframes lunge-p2 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(-60px, 20px) scale(1.1) rotate(-5deg); }
+    }
+    .anim-lunge-p2 { animation: lunge-p2 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+
+    @keyframes faint-drop {
+      0% { transform: translateY(0); opacity: 1; filter: grayscale(0); }
+      100% { transform: translateY(50px); opacity: 0; filter: grayscale(1); }
+    }
+    .anim-faint { animation: faint-drop 1s ease-in forwards; }
+
+    @keyframes shake-soft {
+      0%, 100% { transform: translate(0,0); }
+      25% { transform: translate(3px, 3px) rotate(1deg); }
+      75% { transform: translate(-3px, -3px) rotate(-1deg); }
+    }
+    .shake-soft { animation: shake-soft 0.2s linear infinite; }
+
+    @keyframes shake-violent {
+      0%, 100% { transform: translate(0,0) scale(1); filter: brightness(1); }
+      25% { transform: translate(25px, -25px) scale(1.05); filter: brightness(1.5); }
+      50% { transform: translate(-25px, 25px) scale(0.95); }
+      75% { transform: translate(20px, 10px) scale(1.03); }
+    }
+    .shake-violent { animation: shake-violent 0.15s cubic-bezier(0.36, 0.07, 0.19, 0.97) infinite; }
+
+    .flash-damage { animation: flash-red 0.4s ease-out forwards; }
+    @keyframes flash-red {
+      0%, 100% { filter: brightness(1) sepia(0); }
+      50% { filter: brightness(3) sepia(1) hue-rotate(-50deg) saturate(5); }
+    }
+
+    .vfx-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    .vfx-orb {
+      position: absolute;
+      width: 40px; height: 40px;
+      background: radial-gradient(circle, #fff, var(--vfx-color));
+      border-radius: 50%;
+      box-shadow: 0 0 20px var(--vfx-color), 0 0 40px var(--vfx-color);
+      transform: translate(-50%, -50%);
+    }
+
+    .vfx-slash {
+      position: absolute;
+      width: 0px; height: 12px;
+      background: white;
+      box-shadow: 0 0 20px white, 0 0 40px var(--vfx-color);
+      transform: translate(-50%, -50%) rotate(var(--rot));
+      border-radius: 6px;
+      animation: slash-anim 0.3s ease-out forwards;
+    }
+    @keyframes slash-anim {
+      50% { width: 150px; opacity: 1; }
+      100% { width: 150px; opacity: 0; }
+    }
+
+    .vfx-beam {
+      position: absolute;
+      height: 60px;
+      background: linear-gradient(90deg, transparent, white 20%, var(--vfx-color) 50%, transparent);
+      box-shadow: 0 0 30px var(--vfx-color);
+      border-radius: 30px;
+      transform-origin: left center;
+      animation: beam-anim 0.5s ease-out forwards;
+    }
+    @keyframes beam-anim {
+      0% { width: 0; opacity: 1; }
+      50% { width: 100%; opacity: 1; height: 80px; }
+      100% { width: 100%; opacity: 0; height: 0px; }
+    }
+
+    .vfx-impact {
+      position: absolute;
+      width: 150px; height: 150px;
+      border-radius: 50%;
+      background: radial-gradient(circle, white 10%, var(--vfx-color) 40%, transparent 80%);
+      transform: translate(-50%, -50%) scale(0);
+      mix-blend-mode: screen;
+      animation: impact-anim 0.4s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+    }
+    @keyframes impact-anim {
+      50% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+    }
+
+    .vfx-pokeball {
+      position: absolute;
+      width: 32px; height: 32px;
+      background: linear-gradient(to bottom, #ef4444 50%, white 50%);
+      border: 3px solid #1e293b;
+      border-radius: 50%;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.5), inset -5px -5px 10px rgba(0,0,0,0.2);
+    }
+    .vfx-pokeball::before {
+      content: ''; position: absolute;
+      top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 10px; height: 10px; background: white; border: 2px solid #1e293b; border-radius: 50%;
+    }
+
+    @keyframes throw-arc {
+      0% { left: 20%; bottom: 20%; transform: scale(1) rotate(0deg); opacity: 1; }
+      50% { transform: scale(1.5) rotate(360deg) translateY(-100px); }
+      100% { left: 75%; bottom: 55%; transform: scale(0.8) rotate(720deg); opacity: 1; }
+    }
+    .anim-throw-ball { animation: throw-arc 0.8s cubic-bezier(0.2, 0.8, 0.3, 1) forwards; }
+
+    @keyframes ball-wiggle {
+      0%, 100% { transform: rotate(0deg) scale(0.8); }
+      25% { transform: rotate(-25deg) scale(0.8); }
+      75% { transform: rotate(25deg) scale(0.8); }
+    }
+    .anim-ball-wiggle { animation: ball-wiggle 0.5s ease-in-out; }
+    
+    @keyframes absorb-mon {
+      0% { transform: scale(1); opacity: 1; filter: brightness(1); }
+      100% { transform: scale(0.05); opacity: 0; filter: brightness(10) sepia(1) hue-rotate(-50deg); }
+    }
+    .anim-absorb { animation: absorb-mon 0.6s ease-in forwards; }
   </style>
 </head>
-<body class="flex flex-col relative select-none">
-  <div id="root" class="w-full h-screen relative overflow-hidden"></div>
+<body>
+  <!-- Root element for React -->
+  <div id="root" class="w-full h-full relative"></div>
 
-  <script type="text/babel">
+  <script type="text/babel" data-type="module">
     const { useState, useEffect, useRef, useMemo, useCallback } = React;
 
+    // --- GAME DATABASE --- //
     const TYPE_CHART = {
-      Normal: { Rock: 0.5, Ghost: 0, Steel: 0.5 },
-      Fire: { Fire: 0.5, Water: 0.5, Grass: 2, Ice: 2, Bug: 2, Rock: 0.5, Dragon: 0.5, Steel: 2 },
-      Water: { Fire: 2, Water: 0.5, Grass: 0.5, Ground: 2, Rock: 2, Dragon: 0.5 },
-      Electric: { Water: 2, Electric: 0.5, Grass: 0.5, Ground: 0, Flying: 2, Dragon: 0.5 },
-      Grass: { Fire: 0.5, Water: 2, Grass: 0.5, Poison: 0.5, Ground: 2, Flying: 0.5, Bug: 0.5, Rock: 2, Dragon: 0.5, Steel: 0.5 },
-      Ice: { Fire: 0.5, Water: 0.5, Grass: 2, Ice: 0.5, Ground: 2, Flying: 2, Dragon: 2, Steel: 0.5 },
-      Fighting: { Normal: 2, Ice: 2, Poison: 0.5, Flying: 0.5, Psychic: 0.5, Bug: 0.5, Rock: 2, Ghost: 0, Dark: 2, Steel: 2, Fairy: 0.5 },
-      Poison: { Grass: 2, Poison: 0.5, Ground: 0.5, Rock: 0.5, Ghost: 0.5, Steel: 0 },
-      Ground: { Fire: 2, Electric: 2, Grass: 0.5, Poison: 2, Flying: 0, Bug: 0.5, Rock: 2, Steel: 2 },
-      Flying: { Electric: 0.5, Grass: 2, Fighting: 2, Bug: 2, Rock: 0.5, Steel: 0.5 },
+      Normal:  { Rock: 0.5, Ghost: 0, Steel: 0.5 },
+      Fire:    { Fire: 0.5, Water: 0.5, Grass: 2, Ice: 2, Bug: 2, Rock: 0.5, Dragon: 0.5, Steel: 2 },
+      Water:   { Fire: 2, Water: 0.5, Grass: 0.5, Ground: 2, Rock: 2, Dragon: 0.5 },
+      Electric:{ Water: 2, Electric: 0.5, Grass: 0.5, Ground: 0, Flying: 2, Dragon: 0.5 },
+      Grass:   { Fire: 0.5, Water: 2, Grass: 0.5, Poison: 0.5, Ground: 2, Flying: 0.5, Bug: 0.5, Rock: 2, Dragon: 0.5, Steel: 0.5 },
+      Ice:     { Fire: 0.5, Water: 0.5, Grass: 2, Ice: 0.5, Ground: 2, Flying: 2, Dragon: 2, Steel: 0.5 },
+      Fighting:{ Normal: 2, Ice: 2, Poison: 0.5, Flying: 0.5, Psychic: 0.5, Bug: 0.5, Rock: 2, Ghost: 0, Dark: 2, Steel: 2, Fairy: 0.5 },
+      Poison:  { Grass: 2, Poison: 0.5, Ground: 0.5, Rock: 0.5, Ghost: 0.5, Steel: 0 },
+      Ground:  { Fire: 2, Electric: 2, Grass: 0.5, Poison: 2, Flying: 0, Bug: 0.5, Rock: 2, Steel: 2 },
+      Flying:  { Electric: 0.5, Grass: 2, Fighting: 2, Bug: 2, Rock: 0.5, Steel: 0.5 },
       Psychic: { Fighting: 2, Poison: 2, Psychic: 0.5, Dark: 0, Steel: 0.5 },
-      Bug: { Fire: 0.5, Grass: 2, Fighting: 0.5, Poison: 0.5, Flying: 0.5, Psychic: 2, Ghost: 0.5, Dark: 2, Steel: 0.5, Fairy: 0.5 },
-      Rock: { Fire: 2, Ice: 2, Fighting: 0.5, Ground: 0.5, Flying: 2, Bug: 2, Steel: 0.5 },
-      Ghost: { Normal: 0, Psychic: 2, Ghost: 2, Dark: 0.5 },
-      Dragon: { Dragon: 2, Steel: 0.5, Fairy: 0 },
-      Steel: { Fire: 0.5, Water: 0.5, Electric: 0.5, Ice: 2, Rock: 2, Steel: 0.5, Fairy: 2 },
-      Dark: { Fighting: 0.5, Psychic: 2, Ghost: 2, Dark: 0.5, Fairy: 0.5 },
-      Fairy: { Fire: 0.5, Fighting: 2, Poison: 0.5, Dragon: 2, Dark: 2, Steel: 0.5 },
-      God: { Normal: 1, Fire: 1, Water: 1, Grass: 1, Electric: 1, Ice: 1, Fighting: 1, Poison: 1, Ground: 1, Flying: 1, Psychic: 1, Bug: 1, Rock: 1, Ghost: 1, Dragon: 1, Steel: 1, Dark: 1, Fairy: 1 }
-    };
-
-    const TYPE_COLORS = {
-      Normal: "#a8a29e", Fire: "#f97316", Water: "#3b82f6", Grass: "#22c55e", Electric: "#eab308",
-      Ice: "#67e8f9", Psychic: "#d946ef", Ghost: "#7e22ce", Poison: "#9333ea", Ground: "#d97706",
-      Rock: "#78716c", Flying: "#818cf8", Steel: "#a1a1aa", Dragon: "#7038f8", Dark: "#705848",
-      Fairy: "#ee99ac", God: "#ffd700"
+      Bug:     { Fire: 0.5, Grass: 2, Fighting: 0.5, Poison: 0.5, Flying: 0.5, Psychic: 2, Ghost: 0.5, Dark: 2, Steel: 0.5, Fairy: 0.5 },
+      Rock:    { Fire: 2, Ice: 2, Fighting: 0.5, Ground: 0.5, Flying: 2, Bug: 2, Steel: 0.5 },
+      Ghost:   { Normal: 0, Psychic: 2, Ghost: 2, Dark: 0.5 },
+      Dragon:  { Dragon: 2, Steel: 0.5, Fairy: 0 },
+      Steel:   { Fire: 0.5, Water: 0.5, Electric: 0.5, Ice: 2, Rock: 2, Steel: 0.5, Fairy: 2 },
+      Dark:    { Fighting: 0.5, Psychic: 2, Ghost: 2, Dark: 0.5, Fairy: 0.5 },
+      Fairy:   { Fire: 0.5, Fighting: 2, Poison: 0.5, Dragon: 2, Dark: 2, Steel: 0.5 },
+      God:     { Normal: 1, Fire: 1, Water: 1, Grass: 1, Electric: 1, Ice: 1, Fighting: 1, Poison: 1, Ground: 1, Flying: 1, Psychic: 1, Bug: 1, Rock: 1, Ghost: 1, Dragon: 1, Steel: 1, Dark: 1, Fairy: 1 }
     };
 
     const MOVES = {
-      Tackle: { name: "Tackle", type: "Normal", category: "Physical", power: 40, accuracy: 1, priority: 0, pp: 35 },
-      Scratch: { name: "Scratch", type: "Normal", category: "Physical", power: 40, accuracy: 1, priority: 0, pp: 35 },
-      Growl: { name: "Growl", type: "Normal", category: "Status", power: 0, accuracy: 1, priority: 0, pp: 40, effect: { target: "opponent", stat: "atk", stages: -1 } },
-      "Tail Whip": { name: "Tail Whip", type: "Normal", category: "Status", power: 0, accuracy: 1, priority: 0, pp: 30, effect: { target: "opponent", stat: "def", stages: -1 } },
-      "Quick Attack": { name: "Quick Attack", type: "Normal", category: "Physical", power: 40, accuracy: 1, priority: 1, pp: 30 },
-      Slash: { name: "Slash", type: "Normal", category: "Physical", power: 70, accuracy: 1, priority: 0, pp: 20 },
-      "Vine Whip": { name: "Vine Whip", type: "Grass", category: "Physical", power: 45, accuracy: 1, priority: 0, pp: 25 },
-      "Razor Leaf": { name: "Razor Leaf", type: "Grass", category: "Physical", power: 55, accuracy: 0.95, priority: 0, pp: 25 },
-      "Solar Beam": { name: "Solar Beam", type: "Grass", category: "Special", power: 120, accuracy: 1, priority: 0, pp: 10 },
-      "Flower Trick": { name: "Flower Trick", type: "Grass", category: "Physical", power: 70, accuracy: 1, priority: 0, pp: 10 },
-      Ember: { name: "Ember", type: "Fire", category: "Special", power: 40, accuracy: 1, priority: 0, pp: 25, effect: { target: "opponent", status: "brn", chance: 0.1 } },
-      Flamethrower: { name: "Flamethrower", type: "Fire", category: "Special", power: 90, accuracy: 1, priority: 0, pp: 15, effect: { target: "opponent", status: "brn", chance: 0.1 } },
-      "Fire Blast": { name: "Fire Blast", type: "Fire", category: "Special", power: 110, accuracy: 0.85, priority: 0, pp: 5, effect: { target: "opponent", status: "brn", chance: 0.1 } },
-      "Sacred Fire": { name: "Sacred Fire", type: "Fire", category: "Physical", power: 100, accuracy: 0.95, priority: 0, pp: 5, effect: { target: "opponent", status: "brn", chance: 0.5 } },
-      "Torch Song": { name: "Torch Song", type: "Fire", category: "Special", power: 80, accuracy: 1, priority: 0, pp: 10, effect: { target: "self", stat: "spAtk", stages: 1 } },
-      "Water Gun": { name: "Water Gun", type: "Water", category: "Special", power: 40, accuracy: 1, priority: 0, pp: 25 },
-      "Hydro Pump": { name: "Hydro Pump", type: "Water", category: "Special", power: 110, accuracy: 0.8, priority: 0, pp: 5 },
-      Bubble: { name: "Bubble", type: "Water", category: "Special", power: 40, accuracy: 1, priority: 0, pp: 30, effect: { target: "opponent", stat: "spd", stages: -1, chance: 0.1 } },
-      Surf: { name: "Surf", type: "Water", category: "Special", power: 90, accuracy: 1, priority: 0, pp: 15 },
-      "Water Shuriken": { name: "Water Shuriken", type: "Water", category: "Special", power: 60, accuracy: 1, priority: 1, pp: 20 },
-      "Aqua Step": { name: "Aqua Step", type: "Water", category: "Physical", power: 80, accuracy: 1, priority: 0, pp: 10, effect: { target: "self", stat: "spd", stages: 1 } },
-      "Thunder Shock": { name: "Thunder Shock", type: "Electric", category: "Special", power: 40, accuracy: 1, priority: 0, pp: 30, effect: { target: "opponent", status: "par", chance: 0.1 } },
-      Thunderbolt: { name: "Thunderbolt", type: "Electric", category: "Special", power: 90, accuracy: 1, priority: 0, pp: 15, effect: { target: "opponent", status: "par", chance: 0.1 } },
-      Thunder: { name: "Thunder", type: "Electric", category: "Special", power: 110, accuracy: 0.7, priority: 0, pp: 10, effect: { target: "opponent", status: "par", chance: 0.3 } },
-      "Ice Beam": { name: "Ice Beam", type: "Ice", category: "Special", power: 90, accuracy: 1, priority: 0, pp: 10, effect: { target: "opponent", status: "frz", chance: 0.1 } },
-      Blizzard: { name: "Blizzard", type: "Ice", category: "Special", power: 110, accuracy: 0.7, priority: 0, pp: 5, effect: { target: "opponent", status: "frz", chance: 0.1 } },
-      "Rock Throw": { name: "Rock Throw", type: "Rock", category: "Physical", power: 50, accuracy: 0.9, priority: 0, pp: 15 },
-      Earthquake: { name: "Earthquake", type: "Ground", category: "Physical", power: 100, accuracy: 1, priority: 0, pp: 10 },
-      "Dragon Rush": { name: "Dragon Rush", type: "Dragon", category: "Physical", power: 100, accuracy: 0.75, priority: 0, pp: 10 },
-      "Shadow Ball": { name: "Shadow Ball", type: "Ghost", category: "Special", power: 80, accuracy: 1, priority: 0, pp: 15 },
-      Psychic: { name: "Psychic", type: "Psychic", category: "Special", power: 90, accuracy: 1, priority: 0, pp: 10, effect: { target: "opponent", stat: "spDef", stages: -1, chance: 0.1 } },
-      "Hyper Beam": { name: "Hyper Beam", type: "Normal", category: "Special", power: 150, accuracy: 0.9, priority: 0, pp: 5 },
-      "Wing Attack": { name: "Wing Attack", type: "Flying", category: "Physical", power: 60, accuracy: 1, priority: 0, pp: 35 },
-      Aeroblast: { name: "Aeroblast", type: "Flying", category: "Special", power: 100, accuracy: 0.95, priority: 0, pp: 5 },
-      "Brave Bird": { name: "Brave Bird", type: "Flying", category: "Physical", power: 120, accuracy: 1, priority: 0, pp: 15 },
-      "Dragon Claw": { name: "Dragon Claw", type: "Dragon", category: "Physical", power: 80, accuracy: 1, priority: 0, pp: 15 },
-      Outrage: { name: "Outrage", type: "Dragon", category: "Physical", power: 120, accuracy: 1, priority: 0, pp: 10 },
-      "Flash Cannon": { name: "Flash Cannon", type: "Steel", category: "Special", power: 80, accuracy: 1, priority: 0, pp: 10 },
-      "Iron Tail": { name: "Iron Tail", type: "Steel", category: "Physical", power: 100, accuracy: 0.75, priority: 0, pp: 15, effect: { target: "opponent", stat: "def", stages: -1, chance: 0.3 } },
-      "Gigaton Hammer": { name: "Gigaton Hammer", type: "Steel", category: "Physical", power: 160, accuracy: 1, priority: 0, pp: 5 },
-      Moonblast: { name: "Moonblast", type: "Fairy", category: "Special", power: 95, accuracy: 1, priority: 0, pp: 15, effect: { target: "opponent", stat: "spAtk", stages: -1, chance: 0.3 } },
-      "Play Rough": { name: "Play Rough", type: "Fairy", category: "Physical", power: 90, accuracy: 0.9, priority: 0, pp: 10, effect: { target: "opponent", stat: "atk", stages: -1, chance: 0.1 } },
-      "Dark Pulse": { name: "Dark Pulse", type: "Dark", category: "Special", power: 80, accuracy: 1, priority: 0, pp: 15 },
-      "Night Slash": { name: "Night Slash", type: "Dark", category: "Physical", power: 70, accuracy: 1, priority: 0, pp: 15 },
-      "Aura Sphere": { name: "Aura Sphere", type: "Fighting", category: "Special", power: 80, accuracy: 1, priority: 0, pp: 20 },
-      "Close Combat": { name: "Close Combat", type: "Fighting", category: "Physical", power: 120, accuracy: 1, priority: 0, pp: 5, effect: { target: "self", stat: "def", stages: -1 } },
-      Judgment: { name: "Judgment", type: "God", category: "Special", power: 100, accuracy: 1, priority: 0, pp: 10 },
-      Psystrike: { name: "Psystrike", type: "Psychic", category: "Special", power: 100, accuracy: 1, priority: 0, pp: 10 },
-      "Dragon Ascent": { name: "Dragon Ascent", type: "Flying", category: "Physical", power: 120, accuracy: 1, priority: 0, pp: 5 },
-      Recover: { name: "Recover", type: "Normal", category: "Status", power: 0, accuracy: 1, priority: 0, pp: 10 }
+      "Tackle":        { name: "Tackle", type: "Normal", category: "Physical", power: 40, accuracy: 1, color: "#94a3b8", vfx: "impact" },
+      "Scratch":       { name: "Scratch", type: "Normal", category: "Physical", power: 40, accuracy: 1, color: "#94a3b8", vfx: "slash" },
+      "Quick Attack":  { name: "Quick Attack", type: "Normal", category: "Physical", power: 40, accuracy: 1, priority: 1, color: "#e2e8f0", vfx: "impact" },
+      "Slash":         { name: "Slash", type: "Normal", category: "Physical", power: 70, accuracy: 1, color: "#94a3b8", vfx: "slash" },
+      "Vine Whip":     { name: "Vine Whip", type: "Grass", category: "Physical", power: 45, accuracy: 1, color: "#4ade80", vfx: "slash" },
+      "Razor Leaf":    { name: "Razor Leaf", type: "Grass", category: "Physical", power: 55, accuracy: 0.95, color: "#22c55e", vfx: "slash" },
+      "Solar Beam":    { name: "Solar Beam", type: "Grass", category: "Special", power: 120, accuracy: 1, color: "#16a34a", vfx: "beam" },
+      "Flower Trick":  { name: "Flower Trick", type: "Grass", category: "Physical", power: 70, accuracy: 1, color: "#10b981", vfx: "impact" },
+      "Ember":         { name: "Ember", type: "Fire", category: "Special", power: 40, accuracy: 1, color: "#f87171", vfx: "orb" },
+      "Flamethrower":  { name: "Flamethrower", type: "Fire", category: "Special", power: 90, accuracy: 1, color: "#ef4444", vfx: "beam" },
+      "Fire Blast":    { name: "Fire Blast", type: "Fire", category: "Special", power: 110, accuracy: 0.85, color: "#dc2626", vfx: "impact" },
+      "Sacred Fire":   { name: "Sacred Fire", type: "Fire", category: "Physical", power: 100, accuracy: 0.95, color: "#991b1b", vfx: "impact" },
+      "Water Gun":     { name: "Water Gun", type: "Water", category: "Special", power: 40, accuracy: 1, color: "#38bdf8", vfx: "orb" },
+      "Hydro Pump":    { name: "Hydro Pump", type: "Water", category: "Special", power: 110, accuracy: 0.8, color: "#0284c7", vfx: "beam" },
+      "Surf":          { name: "Surf", type: "Water", category: "Special", power: 90, accuracy: 1, color: "#2563eb", vfx: "impact" },
+      "Aqua Step":     { name: "Aqua Step", type: "Water", category: "Physical", power: 80, accuracy: 1, color: "#0ea5e9", vfx: "slash" },
+      "Thunder Shock": { name: "Thunder Shock", type: "Electric", category: "Special", power: 40, accuracy: 1, color: "#fde047", vfx: "orb" },
+      "Thunderbolt":   { name: "Thunderbolt", type: "Electric", category: "Special", power: 90, accuracy: 1, color: "#facc15", vfx: "beam" },
+      "Thunder":       { name: "Thunder", type: "Electric", category: "Special", power: 110, accuracy: 0.7, color: "#eab308", vfx: "strike" },
+      "Ice Beam":      { name: "Ice Beam", type: "Ice", category: "Special", power: 90, accuracy: 1, color: "#67e8f9", vfx: "beam" },
+      "Blizzard":      { name: "Blizzard", type: "Ice", category: "Special", power: 110, accuracy: 0.7, color: "#06b6d4", vfx: "impact" },
+      "Rock Throw":    { name: "Rock Throw", type: "Rock", category: "Physical", power: 50, accuracy: 0.9, color: "#a8a29e", vfx: "orb" },
+      "Earthquake":    { name: "Earthquake", type: "Ground", category: "Physical", power: 100, accuracy: 1, color: "#ca8a04", vfx: "shockwave" },
+      "Dragon Rush":   { name: "Dragon Rush", type: "Dragon", category: "Physical", power: 100, accuracy: 0.75, color: "#6366f1", vfx: "impact" },
+      "Shadow Ball":   { name: "Shadow Ball", type: "Ghost", category: "Special", power: 80, accuracy: 1, color: "#a855f7", vfx: "orb" },
+      "Psychic":       { name: "Psychic", type: "Psychic", category: "Special", power: 90, accuracy: 1, color: "#ec4899", vfx: "impact" },
+      "Hyper Beam":    { name: "Hyper Beam", type: "Normal", category: "Special", power: 150, accuracy: 0.9, color: "#f1f5f9", vfx: "beam" },
+      "Wing Attack":   { name: "Wing Attack", type: "Flying", category: "Physical", power: 60, accuracy: 1, color: "#93c5fd", vfx: "slash" },
+      "Dragon Claw":   { name: "Dragon Claw", type: "Dragon", category: "Physical", power: 80, accuracy: 1, color: "#4f46e5", vfx: "slash" },
+      "Outrage":       { name: "Outrage", type: "Dragon", category: "Physical", power: 120, accuracy: 1, color: "#312e81", vfx: "impact" },
+      "Flash Cannon":  { name: "Flash Cannon", type: "Steel", category: "Special", power: 80, accuracy: 1, color: "#cbd5e1", vfx: "beam" },
+      "Iron Tail":     { name: "Iron Tail", type: "Steel", category: "Physical", power: 100, accuracy: 0.75, color: "#94a3b8", vfx: "slash" },
+      "Gigaton Hammer":{ name: "Gigaton Hammer", type: "Steel", category: "Physical", power: 160, accuracy: 1, color: "#f43f5e", vfx: "strike" },
+      "Moonblast":     { name: "Moonblast", type: "Fairy", category: "Special", power: 95, accuracy: 1, color: "#f472b6", vfx: "orb" },
+      "Play Rough":    { name: "Play Rough", type: "Fairy", category: "Physical", power: 90, accuracy: 0.9, color: "#fb7185", vfx: "impact" },
+      "Dark Pulse":    { name: "Dark Pulse", type: "Dark", category: "Special", power: 80, accuracy: 1, color: "#64748b", vfx: "beam" },
+      "Night Slash":   { name: "Night Slash", type: "Dark", category: "Physical", power: 70, accuracy: 1, color: "#334155", vfx: "slash" },
+      "Aura Sphere":   { name: "Aura Sphere", type: "Fighting", category: "Special", power: 80, accuracy: 1, color: "#38bdf8", vfx: "orb" },
+      "Close Combat":  { name: "Close Combat", type: "Fighting", category: "Physical", power: 120, accuracy: 1, color: "#f97316", vfx: "impact" },
+      "Judgment":      { name: "Judgment", type: "God", category: "Special", power: 100, accuracy: 1, color: "#fef08a", vfx: "beam" }
     };
 
     const POKEDEX = {
-      Bulbasaur: { id: 1, name: "Bulbasaur", type: ["Grass", "Poison"], hp: 45, atk: 49, def: 49, spAtk: 65, spDef: 65, spd: 45, catchRate: 45, moves: ["Tackle", "Growl", "Vine Whip"], learnset: { 7: "Vine Whip", 20: "Razor Leaf", 30: "Solar Beam" }, evolution: { level: 16, to: "Ivysaur" } },
-      Ivysaur: { id: 2, name: "Ivysaur", type: ["Grass", "Poison"], hp: 60, atk: 62, def: 63, spAtk: 80, spDef: 80, spd: 60, catchRate: 45, moves: ["Tackle", "Vine Whip", "Razor Leaf"], learnset: { 20: "Razor Leaf", 35: "Solar Beam" }, evolution: { level: 32, to: "Venusaur" } },
-      Venusaur: { id: 3, name: "Venusaur", type: ["Grass", "Poison"], hp: 80, atk: 82, def: 83, spAtk: 100, spDef: 100, spd: 80, catchRate: 45, moves: ["Vine Whip", "Razor Leaf", "Solar Beam", "Earthquake"] },
-      Charmander: { id: 4, name: "Charmander", type: ["Fire"], hp: 39, atk: 52, def: 43, spAtk: 60, spDef: 50, spd: 65, catchRate: 45, moves: ["Scratch", "Growl", "Ember"], learnset: { 7: "Ember", 15: "Slash", 25: "Flamethrower", 40: "Fire Blast" }, evolution: { level: 16, to: "Charmeleon" } },
-      Charmeleon: { id: 5, name: "Charmeleon", type: ["Fire"], hp: 58, atk: 64, def: 58, spAtk: 80, spDef: 65, spd: 80, catchRate: 45, moves: ["Scratch", "Ember", "Slash"], learnset: { 18: "Slash", 28: "Flamethrower", 45: "Fire Blast" }, evolution: { level: 36, to: "Charizard" } },
-      Charizard: { id: 6, name: "Charizard", type: ["Fire", "Flying"], hp: 78, atk: 84, def: 78, spAtk: 109, spDef: 85, spd: 100, catchRate: 45, moves: ["Flamethrower", "Wing Attack", "Fire Blast", "Dragon Claw"] },
-      Squirtle: { id: 7, name: "Squirtle", type: ["Water"], hp: 44, atk: 48, def: 65, spAtk: 50, spDef: 64, spd: 43, catchRate: 45, moves: ["Tackle", "Tail Whip", "Water Gun"], learnset: { 7: "Water Gun", 15: "Bubble", 25: "Surf", 35: "Hydro Pump" }, evolution: { level: 16, to: "Wartortle" } },
-      Wartortle: { id: 8, name: "Wartortle", type: ["Water"], hp: 59, atk: 63, def: 80, spAtk: 65, spDef: 80, spd: 58, catchRate: 45, moves: ["Tackle", "Water Gun", "Bubble"], learnset: { 25: "Surf", 40: "Hydro Pump", 45: "Ice Beam" }, evolution: { level: 36, to: "Blastoise" } },
-      Blastoise: { id: 9, name: "Blastoise", type: ["Water"], hp: 79, atk: 83, def: 100, spAtk: 85, spDef: 105, spd: 78, catchRate: 45, moves: ["Surf", "Ice Beam", "Hydro Pump", "Flash Cannon"] },
-      Sprigatito: { id: 906, name: "Sprigatito", type: ["Grass"], hp: 40, atk: 61, def: 54, spAtk: 45, spDef: 45, spd: 65, catchRate: 45, moves: ["Scratch", "Razor Leaf"], learnset: { 15: "Flower Trick" }, evolution: { level: 16, to: "Floragato" } },
-      Floragato: { id: 907, name: "Floragato", type: ["Grass"], hp: 61, atk: 80, def: 63, spAtk: 60, spDef: 63, spd: 83, catchRate: 45, moves: ["Razor Leaf", "Flower Trick", "Slash"], learnset: { 36: "Solar Beam" }, evolution: { level: 36, to: "Meowscarada" } },
-      Meowscarada: { id: 908, name: "Meowscarada", type: ["Grass", "Dark"], hp: 76, atk: 110, def: 70, spAtk: 81, spDef: 70, spd: 123, catchRate: 45, moves: ["Flower Trick", "Night Slash", "Play Rough", "Solar Beam"] },
-      Fuecoco: { id: 909, name: "Fuecoco", type: ["Fire"], hp: 67, atk: 45, def: 59, spAtk: 63, spDef: 40, spd: 36, catchRate: 45, moves: ["Tackle", "Ember"], learnset: { 15: "Flamethrower" }, evolution: { level: 16, to: "Crocalor" } },
-      Crocalor: { id: 910, name: "Crocalor", type: ["Fire"], hp: 81, atk: 55, def: 78, spAtk: 90, spDef: 58, spd: 49, catchRate: 45, moves: ["Ember", "Flamethrower"], learnset: { 36: "Torch Song" }, evolution: { level: 36, to: "Skeledirge" } },
-      Skeledirge: { id: 911, name: "Skeledirge", type: ["Fire", "Ghost"], hp: 104, atk: 75, def: 100, spAtk: 110, spDef: 75, spd: 66, catchRate: 45, moves: ["Torch Song", "Shadow Ball", "Earthquake", "Fire Blast"] },
-      Quaxly: { id: 912, name: "Quaxly", type: ["Water"], hp: 55, atk: 65, def: 45, spAtk: 50, spDef: 45, spd: 50, catchRate: 45, moves: ["Water Gun", "Quick Attack"], learnset: { 15: "Aqua Step" }, evolution: { level: 16, to: "Quaxwell" } },
-      Quaxwell: { id: 913, name: "Quaxwell", type: ["Water"], hp: 70, atk: 85, def: 65, spAtk: 65, spDef: 60, spd: 65, catchRate: 45, moves: ["Water Gun", "Aqua Step", "Wing Attack"], learnset: { 36: "Close Combat" }, evolution: { level: 36, to: "Quaquaval" } },
-      Quaquaval: { id: 914, name: "Quaquaval", type: ["Water", "Fighting"], hp: 85, atk: 120, def: 80, spAtk: 85, spDef: 75, spd: 85, catchRate: 45, moves: ["Aqua Step", "Close Combat", "Aura Sphere", "Hydro Pump"] },
-      Lucario: { id: 448, name: "Lucario", type: ["Fighting", "Steel"], hp: 70, atk: 110, def: 70, spAtk: 115, spDef: 70, spd: 90, catchRate: 45, moves: ["Aura Sphere", "Close Combat", "Flash Cannon", "Dragon Claw"] },
-      Garchomp: { id: 445, name: "Garchomp", type: ["Dragon", "Ground"], hp: 108, atk: 130, def: 95, spAtk: 80, spDef: 85, spd: 102, catchRate: 45, moves: ["Dragon Rush", "Earthquake", "Dragon Claw", "Fire Blast"] },
-      Greninja: { id: 658, name: "Greninja", type: ["Water", "Dark"], hp: 72, atk: 95, def: 67, spAtk: 103, spDef: 71, spd: 122, catchRate: 45, moves: ["Water Shuriken", "Night Slash", "Hydro Pump", "Dark Pulse"] },
-      Tinkaton: { id: 959, name: "Tinkaton", type: ["Fairy", "Steel"], hp: 85, atk: 75, def: 77, spAtk: 70, spDef: 105, spd: 94, catchRate: 45, moves: ["Gigaton Hammer", "Play Rough", "Flash Cannon", "Rock Throw"] },
-      Dragapult: { id: 887, name: "Dragapult", type: ["Dragon", "Ghost"], hp: 88, atk: 120, def: 75, spAtk: 100, spDef: 75, spd: 142, catchRate: 45, moves: ["Dragon Claw", "Shadow Ball", "Thunderbolt", "Flamethrower"] },
-      Pikachu: { id: 25, name: "Pikachu", type: ["Electric"], hp: 35, atk: 55, def: 40, spAtk: 50, spDef: 50, spd: 90, catchRate: 190, moves: ["Thunder Shock", "Quick Attack"], learnset: { 20: "Thunderbolt", 35: "Thunder" }, evolution: { level: 25, to: "Raichu" } },
-      Raichu: { id: 26, name: "Raichu", type: ["Electric"], hp: 60, atk: 90, def: 55, spAtk: 90, spDef: 80, spd: 110, catchRate: 75, moves: ["Thunderbolt", "Quick Attack", "Thunder", "Iron Tail"] },
-      Alakazam: { id: 65, name: "Alakazam", type: ["Psychic"], hp: 55, atk: 50, def: 45, spAtk: 135, spDef: 95, spd: 120, catchRate: 50, moves: ["Psychic", "Shadow Ball", "Hyper Beam", "Thunderbolt"] },
-      Gengar: { id: 94, name: "Gengar", type: ["Ghost", "Poison"], hp: 60, atk: 65, def: 60, spAtk: 130, spDef: 75, spd: 110, catchRate: 45, moves: ["Shadow Ball", "Psychic", "Thunderbolt", "Sludge Bomb"] },
-      Dragonite: { id: 149, name: "Dragonite", type: ["Dragon", "Flying"], hp: 91, atk: 134, def: 95, spAtk: 100, spDef: 100, spd: 80, catchRate: 45, moves: ["Outrage", "Wing Attack", "Thunderbolt", "Fire Blast"] },
-      Mewtwo: { id: 150, name: "Mewtwo", type: ["Psychic"], hp: 106, atk: 110, def: 90, spAtk: 154, spDef: 90, spd: 130, catchRate: 3, isLegend: true, moves: ["Psystrike", "Shadow Ball", "Ice Beam", "Aura Sphere"] },
-      Rayquaza: { id: 384, name: "Rayquaza", type: ["Dragon", "Flying"], hp: 105, atk: 150, def: 90, spAtk: 150, spDef: 90, spd: 95, catchRate: 3, isLegend: true, moves: ["Dragon Ascent", "Outrage", "Flamethrower", "Earthquake"] },
-      Arceus: { id: 493, name: "Arceus", type: ["God"], hp: 120, atk: 120, def: 120, spAtk: 120, spDef: 120, spd: 120, catchRate: 3, isLegend: true, moves: ["Judgment", "Hyper Beam", "Earthquake", "Shadow Ball"] }
+      Bulbasaur: { id: 1, type: ["Grass", "Poison"], hp: 45, atk: 49, def: 49, spAtk: 65, spDef: 65, spd: 45, moves: ["Tackle", "Vine Whip"], evo: { level: 16, to: "Ivysaur" } },
+      Ivysaur: { id: 2, type: ["Grass", "Poison"], hp: 60, atk: 62, def: 63, spAtk: 80, spDef: 80, spd: 60, moves: ["Tackle", "Vine Whip", "Razor Leaf"], evo: { level: 32, to: "Venusaur" } },
+      Venusaur: { id: 3, type: ["Grass", "Poison"], hp: 80, atk: 82, def: 83, spAtk: 100, spDef: 100, spd: 80, moves: ["Vine Whip", "Razor Leaf", "Solar Beam", "Earthquake"] },
+      Charmander: { id: 4, type: ["Fire"], hp: 39, atk: 52, def: 43, spAtk: 60, spDef: 50, spd: 65, moves: ["Scratch", "Ember"], evo: { level: 16, to: "Charmeleon" } },
+      Charmeleon: { id: 5, type: ["Fire"], hp: 58, atk: 64, def: 58, spAtk: 80, spDef: 65, spd: 80, moves: ["Scratch", "Ember", "Slash"], evo: { level: 36, to: "Charizard" } },
+      Charizard: { id: 6, type: ["Fire", "Flying"], hp: 78, atk: 84, def: 78, spAtk: 109, spDef: 85, spd: 100, moves: ["Flamethrower", "Wing Attack", "Fire Blast", "Dragon Claw"] },
+      Squirtle: { id: 7, type: ["Water"], hp: 44, atk: 48, def: 65, spAtk: 50, spDef: 64, spd: 43, moves: ["Tackle", "Water Gun"], evo: { level: 16, to: "Wartortle" } },
+      Wartortle: { id: 8, type: ["Water"], hp: 59, atk: 63, def: 80, spAtk: 65, spDef: 80, spd: 58, moves: ["Tackle", "Water Gun", "Surf"], evo: { level: 36, to: "Blastoise" } },
+      Blastoise: { id: 9, type: ["Water"], hp: 79, atk: 83, def: 100, spAtk: 85, spDef: 105, spd: 78, moves: ["Surf", "Ice Beam", "Hydro Pump", "Flash Cannon"] },
+      Pikachu: { id: 25, type: ["Electric"], hp: 35, atk: 55, def: 40, spAtk: 50, spDef: 50, spd: 90, moves: ["Thunder Shock", "Quick Attack", "Thunderbolt"], evo: { level: 25, to: "Raichu" } },
+      Raichu: { id: 26, type: ["Electric"], hp: 60, atk: 90, def: 55, spAtk: 90, spDef: 80, spd: 110, moves: ["Thunderbolt", "Quick Attack", "Thunder", "Iron Tail"] },
+      Onix: { id: 95, type: ["Rock", "Ground"], hp: 35, atk: 45, def: 160, spAtk: 30, spDef: 45, spd: 70, moves: ["Rock Throw", "Tackle", "Earthquake"] },
+      Gengar: { id: 94, type: ["Ghost", "Poison"], hp: 60, atk: 65, def: 60, spAtk: 130, spDef: 75, spd: 110, moves: ["Shadow Ball", "Psychic", "Thunderbolt", "Dark Pulse"] },
+      Alakazam: { id: 65, type: ["Psychic"], hp: 55, atk: 50, def: 45, spAtk: 135, spDef: 95, spd: 120, moves: ["Psychic", "Shadow Ball", "Hyper Beam"] },
+      Lucario: { id: 448, type: ["Fighting", "Steel"], hp: 70, atk: 110, def: 70, spAtk: 115, spDef: 70, spd: 90, moves: ["Aura Sphere", "Close Combat", "Flash Cannon", "Dragon Claw"] },
+      Garchomp: { id: 445, type: ["Dragon", "Ground"], hp: 108, atk: 130, def: 95, spAtk: 80, spDef: 85, spd: 102, moves: ["Dragon Rush", "Earthquake", "Dragon Claw", "Fire Blast"] },
+      Greninja: { id: 658, type: ["Water", "Dark"], hp: 72, atk: 95, def: 67, spAtk: 103, spDef: 71, spd: 122, moves: ["Water Shuriken", "Night Slash", "Hydro Pump", "Dark Pulse"] },
+      Tinkaton: { id: 959, type: ["Fairy", "Steel"], hp: 85, atk: 75, def: 77, spAtk: 70, spDef: 105, spd: 94, moves: ["Gigaton Hammer", "Play Rough", "Flash Cannon", "Rock Throw"] },
+      Dragonite: { id: 149, type: ["Dragon", "Flying"], hp: 91, atk: 134, def: 95, spAtk: 100, spDef: 100, spd: 80, moves: ["Outrage", "Wing Attack", "Thunderbolt", "Fire Blast"] },
+      Mewtwo: { id: 150, type: ["Psychic"], hp: 106, atk: 110, def: 90, spAtk: 154, spDef: 90, spd: 130, moves: ["Psystrike", "Shadow Ball", "Ice Beam", "Aura Sphere"], isLegend: true },
+      Rayquaza: { id: 384, type: ["Dragon", "Flying"], hp: 105, atk: 150, def: 90, spAtk: 150, spDef: 90, spd: 95, moves: ["Dragon Ascent", "Outrage", "Flamethrower", "Earthquake"], isLegend: true },
+      Arceus: { id: 493, type: ["God"], hp: 120, atk: 120, def: 120, spAtk: 120, spDef: 120, spd: 120, moves: ["Judgment", "Hyper Beam", "Earthquake", "Shadow Ball"], isLegend: true }
     };
 
     const GYMS = [
-      { id: "pewter", name: "Pewter Gym", leader: "Brock", type: "Rock", minLevel: 15, badge: "Boulder Badge", floor: "floor-rock", team: [{ name: "Onix", lvl: 18 }, { name: "Steelix", lvl: 22 }] },
-      { id: "cerulean", name: "Cerulean Gym", leader: "Misty", type: "Water", minLevel: 25, badge: "Cascade Badge", floor: "floor-water", team: [{ name: "Squirtle", lvl: 24 }, { name: "Blastoise", lvl: 28 }] },
-      { id: "vermilion", name: "Vermilion Gym", leader: "Lt. Surge", type: "Electric", minLevel: 35, badge: "Thunder Badge", floor: "floor-electric", team: [{ name: "Pikachu", lvl: 33 }, { name: "Raichu", lvl: 38 }] },
-      { id: "celadon", name: "Celadon Gym", leader: "Erika", type: "Grass", minLevel: 45, badge: "Rainbow Badge", floor: "floor-grass", team: [{ name: "Ivysaur", lvl: 42 }, { name: "Venusaur", lvl: 48 }] },
-      { id: "fuchsia", name: "Fuchsia Gym", leader: "Koga", type: "Poison", minLevel: 55, badge: "Soul Badge", floor: "floor-poison", team: [{ name: "Gastly", lvl: 52 }, { name: "Gengar", lvl: 58 }] },
-      { id: "saffron", name: "Saffron Gym", leader: "Sabrina", type: "Psychic", minLevel: 65, badge: "Marsh Badge", floor: "floor-psychic", team: [{ name: "Kadabra", lvl: 62 }, { name: "Alakazam", lvl: 68 }] },
-      { id: "cinnabar", name: "Cinnabar Gym", leader: "Blaine", type: "Fire", minLevel: 75, badge: "Volcano Badge", floor: "floor-fire", team: [{ name: "Charmeleon", lvl: 72 }, { name: "Charizard", lvl: 78 }] },
-      { id: "champion", name: "Pokémon League", leader: "Lance", type: "Dragon", minLevel: 85, badge: "Champion Ribbon", floor: "floor-dragon", team: [{ name: "Dragonair", lvl: 82 }, { name: "Dragonite", lvl: 88 }, { name: "Rayquaza", lvl: 92 }] }
+      { id: "pewter", name: "Pewter Gym", leader: "Brock", type: "Rock", env: "env-rock", lvl: 15, team: ["Onix"] },
+      { id: "cerulean", name: "Cerulean Gym", leader: "Misty", type: "Water", env: "env-water", lvl: 25, team: ["Wartortle", "Blastoise"] },
+      { id: "vermilion", name: "Vermilion Gym", leader: "Lt. Surge", type: "Electric", env: "env-electric", lvl: 35, team: ["Pikachu", "Raichu"] },
+      { id: "celadon", name: "Celadon Gym", leader: "Erika", type: "Grass", env: "env-grass", lvl: 45, team: ["Venusaur"] },
+      { id: "fuchsia", name: "Fuchsia Gym", leader: "Koga", type: "Poison", env: "env-poison", lvl: 55, team: ["Gengar"] },
+      { id: "saffron", name: "Saffron Gym", leader: "Sabrina", type: "Psychic", env: "env-psychic", lvl: 65, team: ["Alakazam"] },
+      { id: "cinnabar", name: "Cinnabar Gym", leader: "Blaine", type: "Fire", env: "env-fire", lvl: 75, team: ["Charizard"] },
+      { id: "champion", name: "Pokémon League", leader: "Lance", type: "Dragon", env: "env-dragon", lvl: 85, team: ["Dragonite", "Rayquaza"] }
     ];
 
-    const TRIALS = [
-      { id: "melemele", name: "Melemele Trial", leader: "Hala", type: "Electric", minLevel: 80, badge: "Melemele Stamp", floor: "floor-electric", team: [{ name: "Alolan Raichu", lvl: 80 }] },
-      { id: "akala", name: "Akala Trial", leader: "Kiawe", type: "Fire", minLevel: 82, badge: "Akala Stamp", floor: "floor-fire", team: [{ name: "Alolan Marowak", lvl: 82 }] },
-      { id: "ulaula", name: "Ula'ula Trial", leader: "Nanu", type: "Ice", minLevel: 85, badge: "Ula'ula Stamp", floor: "floor-water", team: [{ name: "Alolan Vulpix", lvl: 80 }, { name: "Alolan Ninetales", lvl: 85 }] }
-    ];
-
-    const ITEMS = {
-      pokeBalls: { name: "Poké Ball", rate: 1, cost: 200 },
-      greatBalls: { name: "Great Ball", rate: 1.5, cost: 600 },
-      ultraBalls: { name: "Ultra Ball", rate: 2, cost: 1200 },
-      masterBalls: { name: "Master Ball", rate: 255, cost: 5000 },
-      potions: { name: "Max Potion", heal: 999, cost: 300 }
-    };
-
-    function ds(name, lvl, isBoss = false) {
-      const template = POKEDEX[name] || POKEDEX.Bulbasaur;
+    function createCombatant(name, lvl, isBoss = false) {
+      const base = POKEDEX[name] || POKEDEX.Pikachu;
       const mult = isBoss ? 1.3 : 1.0;
-      const c = stat => Math.floor(((stat * 2 * lvl) / 100 + 5) * mult);
-      const maxHp = Math.floor(((template.hp * 2 * lvl) / 100 + lvl + 10) * mult);
-
-      let moves = [...template.moves];
-      if (template.learnset) {
-        Object.entries(template.learnset).forEach(([reqLvl, mName]) => {
-          if (Number(reqLvl) <= lvl && !moves.includes(mName)) {
-            if (moves.length >= 4) moves.shift();
-            moves.push(mName);
-          }
-        });
-      }
-
+      const hp = Math.floor(((base.hp * 2 * lvl) / 100 + lvl + 10) * mult);
       return {
-        uuid: crypto.randomUUID(),
-        id: template.id,
+        id: crypto.randomUUID(),
+        dexId: base.id,
         name: isBoss ? `BOSS ${name}` : name,
-        type: template.type,
-        lvl,
-        hp: maxHp,
-        maxHp,
-        xp: Math.pow(lvl, 3),
-        nextXp: Math.pow(lvl + 1, 3),
-        stats: { atk: c(template.atk), def: c(template.def), spAtk: c(template.spAtk), spDef: c(template.spDef), spd: c(template.spd) },
-        stages: { atk: 0, def: 0, spAtk: 0, spDef: 0, spd: 0, acc: 0, eva: 0 },
-        status: null,
-        moves: moves.slice(-4),
-        sprites: {
-          front: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${template.id}.gif`,
-          back: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/back/${template.id}.gif`
-        }
+        baseName: name,
+        type: base.type,
+        lvl, hp, maxHp: hp,
+        stats: {
+          atk: Math.floor(((base.atk * 2 * lvl) / 100 + 5) * mult),
+          def: Math.floor(((base.def * 2 * lvl) / 100 + 5) * mult),
+          spAtk: Math.floor(((base.spAtk * 2 * lvl) / 100 + 5) * mult),
+          spDef: Math.floor(((base.spDef * 2 * lvl) / 100 + 5) * mult),
+          spd: Math.floor(((base.spd * 2 * lvl) / 100 + 5) * mult)
+        },
+        moves: [...base.moves]
       };
     }
 
-    function Yx(mon, expGained) {
-      mon.xp += expGained;
-      let leveledUp = false;
-      let newMoves = [];
-
-      while (mon.xp >= mon.nextXp && mon.lvl < 100) {
-        mon.lvl++;
-        mon.nextXp = Math.pow(mon.lvl + 1, 3);
-        leveledUp = true;
-
-        const base = POKEDEX[mon.name] || POKEDEX.Bulbasaur;
-        const oldMax = mon.maxHp;
-        mon.maxHp = Math.floor((base.hp * 2 * mon.lvl) / 100 + mon.lvl + 10);
-        mon.hp += mon.maxHp - oldMax;
-
-        const learned = base.learnset ? base.learnset[mon.lvl] : null;
-        if (learned && !mon.moves.includes(learned)) {
-          newMoves.push(learned);
-          if (mon.moves.length >= 4) mon.moves.shift();
-          mon.moves.push(learned);
-        }
-      }
-
-      const baseInfo = POKEDEX[mon.name];
-      const readyToEvolve = !!(baseInfo && baseInfo.evolution && mon.lvl >= baseInfo.evolution.level);
-      return { p: mon, leveledUp, newMoves, readyToEvolve };
-    }
-
-    function Hx(mon) {
-      const info = POKEDEX[mon.name];
-      if (!info || !info.evolution) return mon;
-      const nextName = info.evolution.to;
-      const nextBase = POKEDEX[nextName];
-      if (!nextBase) return mon;
-
-      mon.name = nextName;
-      mon.id = nextBase.id;
-      mon.type = nextBase.type;
-      mon.maxHp = Math.floor((nextBase.hp * 2 * mon.lvl) / 100 + mon.lvl + 10);
-      mon.hp = mon.maxHp;
-      mon.sprites = {
-        front: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${nextBase.id}.gif`,
-        back: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/back/${nextBase.id}.gif`
-      };
-      return mon;
-    }
-
-    function Qx(attacker, defender, move) {
-      if (move.category === "Status") return { damage: 0, critical: false, effectiveness: 1, missed: false };
-      
-      const accDiff = (attacker.stages.acc || 0) - (defender.stages.eva || 0);
-      const accuracyMultiplier = [0.33, 0.38, 0.43, 0.5, 0.6, 0.75, 1, 1.33, 1.66, 2, 2.33, 2.66, 3][Math.max(0, Math.min(12, accDiff + 6))];
-      if (Math.random() > (move.accuracy * accuracyMultiplier)) return { damage: 0, critical: false, effectiveness: 0, missed: true };
-
+    function calcDamage(attacker, defender, move) {
+      if(move.power === 0) return { damage: 0, mult: 1, crit: false };
       const isCrit = Math.random() < 0.0625;
-      const critMultiplier = isCrit ? 1.5 : 1.0;
-
-      const getStat = (mon, statName, isAtk) => {
-        let stage = mon.stages[statName] || 0;
-        if (isCrit && isAtk && stage < 0) stage = 0;
-        if (isCrit && !isAtk && stage > 0) stage = 0;
-        const mult = stage >= 0 ? (2 + stage) / 2 : 2 / (2 + Math.abs(stage));
-        let val = mon.stats[statName] * mult;
-        if (isAtk && mon.status === "brn" && move.category === "Physical") val *= 0.5;
-        if (statName === "spd" && mon.status === "par") val *= 0.5;
-        return val;
-      };
-
-      let aStat, dStat;
-      if (move.category === "Physical") {
-        aStat = getStat(attacker, "atk", true);
-        dStat = getStat(defender, "def", false);
-      } else {
-        aStat = getStat(attacker, "spAtk", true);
-        dStat = getStat(defender, "spDef", false);
-      }
-
-      let baseDmg = Math.floor(Math.floor(Math.floor((2 * attacker.lvl) / 5 + 2) * move.power * (aStat / dStat)) / 50) + 2;
-      const stab = attacker.type.includes(move.type) ? 1.5 : 1.0;
+      const aStat = move.category === 'Physical' ? attacker.stats.atk : attacker.stats.spAtk;
+      const dStat = move.category === 'Physical' ? defender.stats.def : defender.stats.spDef;
       
-      let typeMult = 1.0;
+      let baseDmg = Math.floor(Math.floor(Math.floor(2 * attacker.lvl / 5 + 2) * move.power * (aStat / dStat)) / 50) + 2;
+      
+      const stab = attacker.type.includes(move.type) ? 1.5 : 1;
+      let typeMult = 1;
       defender.type.forEach(t => {
-        if (TYPE_CHART[move.type] && TYPE_CHART[move.type][t] !== undefined) typeMult *= TYPE_CHART[move.type][t];
+        if(TYPE_CHART[move.type] && TYPE_CHART[move.type][t] !== undefined) typeMult *= TYPE_CHART[move.type][t];
       });
 
-      const randomFactor = (Math.floor(Math.random() * 16) + 85) / 100;
-      baseDmg = Math.floor(baseDmg * stab * typeMult * critMultiplier * randomFactor);
-      if (baseDmg === 0 && typeMult > 0 && move.power > 0) baseDmg = 1;
-
-      return { damage: baseDmg, critical: isCrit, effectiveness: typeMult, missed: false };
+      const random = (Math.floor(Math.random() * 16) + 85) / 100;
+      const finalDmg = Math.floor(baseDmg * stab * typeMult * (isCrit ? 1.5 : 1) * random);
+      
+      return { damage: Math.max(1, finalDmg), mult: typeMult, crit: isCrit };
     }
 
-    function xy(mon, ballRate = 1) {
-      const maxHp = mon.maxHp;
-      const hp = mon.hp;
-      const catchRate = POKEDEX[mon.name] ? POKEDEX[mon.name].catchRate || 45 : 45;
-      let statusMult = 1.0;
-      if (mon.status === "frz" || mon.status === "slp") statusMult = 2.5;
-      else if (mon.status === "par" || mon.status === "psn" || mon.status === "brn") statusMult = 1.5;
-
-      let a = Math.floor((3 * maxHp - 2 * hp) * catchRate * ballRate / (3 * maxHp) * statusMult);
-      if (a >= 255) return { success: true, shakes: 3, probability: 100 };
-
-      const b = 65536 / Math.pow(255 / a, 0.1875);
-      let shakes = 0;
-      for (let i = 0; i < 4; i++) {
-        if (Math.floor(Math.random() * 65536) < b) shakes++;
-      }
-      const success = shakes === 4;
-      return { success, shakes: success ? 3 : Math.min(3, shakes) };
-    }
-
-    let audioActive = false;
-    let polySynth, noiseSynth;
-
-    function toggleAudio() {
-      if (!polySynth) {
-        polySynth = new Tone.PolySynth(Tone.Synth).toDestination();
-        noiseSynth = new Tone.NoiseSynth().toDestination();
+    const audioCtx = { synth: null, noise: null, active: false };
+    function initAudio() {
+      if(!audioCtx.synth) {
+        audioCtx.synth = new Tone.PolySynth(Tone.Synth).toDestination();
+        audioCtx.noise = new Tone.NoiseSynth().toDestination();
+        audioCtx.synth.volume.value = -8;
+        audioCtx.noise.volume.value = -12;
       }
       Tone.start();
-      audioActive = !audioActive;
-      const textEl = document.getElementById('audio-text');
-      const iconEl = document.getElementById('audio-icon');
-      if (textEl) textEl.innerText = audioActive ? "Audio: ON" : "Audio: OFF";
-      if (iconEl) iconEl.className = audioActive ? "fa-solid fa-volume-high text-emerald-400" : "fa-solid fa-volume-xmark text-rose-400";
-      if (audioActive) polySynth.triggerAttackRelease(['C4', 'E4', 'G4'], '8n');
+      audioCtx.active = true;
     }
-
+    
     function playSfx(type) {
-      if (!audioActive || !polySynth) return;
-      try {
-        const now = Tone.now();
-        if (type === 'hit') noiseSynth.triggerAttackRelease('16n', now);
-        else if (type === 'super') polySynth.triggerAttackRelease(['G4', 'C5', 'E5'], '8n', now);
-        else if (type === 'crit') polySynth.triggerAttackRelease(['A4', 'A5'], '16n', now);
-        else if (type === 'faint') polySynth.triggerAttackRelease(['G3', 'Eb3', 'C3'], '4n', now);
-        else if (type === 'catch') polySynth.triggerAttackRelease(['C5', 'G4', 'C4'], '8n', now);
-        else if (type === 'evo') polySynth.triggerAttackRelease(['C4', 'E4', 'G4', 'C5'], '4n', now);
-        else if (type === 'click') polySynth.triggerAttackRelease('G5', '32n', now);
-        else if (type === 'heal') polySynth.triggerAttackRelease(['C4', 'E4', 'G4', 'C5'], '8n', now);
-      } catch(e) {}
+      if(!audioCtx.active || !audioCtx.synth) return;
+      const now = Tone.now();
+      switch(type) {
+        case 'hit': audioCtx.noise.triggerAttackRelease('16n', now); break;
+        case 'super': audioCtx.synth.triggerAttackRelease(['C5','E5','G5'], '8n', now); break;
+        case 'faint': audioCtx.synth.triggerAttackRelease(['C3','G2','C2'], '4n', now); break;
+        case 'catch': audioCtx.synth.triggerAttackRelease(['C4','E4','G4','C5'], '4n', now); break;
+        case 'evo': audioCtx.synth.triggerAttackRelease(['G4','B4','D5','G5'], '2n', now); break;
+        case 'ui': audioCtx.synth.triggerAttackRelease('C6', '32n', now); break;
+      }
     }
 
-    function GameEngine() {
-      const [view, setView] = useState("start");
+    const App = () => {
+      const [screen, setScreen] = useState('boot');
       const [player, setPlayer] = useState(null);
-      const [battleMode, setBattleMode] = useState("ai");
-      const [playerParty, setPlayerParty] = useState([]);
-      const [enemyParty, setEnemyParty] = useState([]);
-      const [gymId, setGymId] = useState(null);
-      const [evolvingMon, setEvolvingMon] = useState(null);
-      const [peerConn, setPeerConn] = useState(null);
-      const [badgeWon, setBadgeWon] = useState(null);
 
-      const SAVE_KEY = "poke_champions_ultimate_v40";
-
-      const initContext = useCallback(() => {
-        if (Tone.context.state !== "running") Tone.start();
+      // Load Save
+      useEffect(() => {
+        const save = localStorage.getItem('poke_champs_v1');
+        if(save) {
+          setPlayer(JSON.parse(save));
+        }
       }, []);
 
-      const loadSave = () => {
-        initContext();
-        const data = localStorage.getItem(SAVE_KEY);
-        if (data) {
-          const parsed = JSON.parse(data);
-          setPlayer(parsed);
-          setView("hub");
-        }
+      const saveGame = (data) => {
+        setPlayer(data);
+        localStorage.setItem('poke_champs_v1', JSON.stringify(data));
       };
 
-      const startNewGame = trainerName => {
-        initContext();
-        const defaultParty = [ds("Bulbasaur", 5), ds("Charmander", 5), ds("Squirtle", 5)];
+      const startNewGame = () => {
+        initAudio();
         const newPlayer = {
-          name: trainerName,
-          wins: 0,
-          team: defaultParty,
-          box: [],
-          bag: { potions: 5, pokeBalls: 10, greatBalls: 3, ultraBalls: 1, masterBalls: 0 },
+          name: "Ash",
+          money: 3000,
           badges: [],
-          money: 1000
+          team: [createCombatant("Charmander", 5), createCombatant("Squirtle", 5)],
+          bag: { pokeBalls: 10, potions: 5 }
         };
-        setPlayer(newPlayer);
         saveGame(newPlayer);
-        setView("hub");
+        setScreen('hub');
       };
 
-      const saveGame = pData => {
-        localStorage.setItem(SAVE_KEY, JSON.stringify(pData));
-      };
-
-      const handleBattleEnd = (winner, isCaught, activeUuids, updatedTeam) => {
-        if (peerConn) {
-          peerConn.close();
-          setPeerConn(null);
-        }
-        if (!player) return;
-
-        const updatedPlayer = { ...player };
-        updatedTeam.forEach(mon => {
-          const idx = updatedPlayer.team.findIndex(m => m.uuid === mon.uuid);
-          if (idx !== -1) {
-            updatedPlayer.team[idx] = { ...updatedPlayer.team[idx], hp: mon.hp, status: mon.status, stages: mon.stages };
-          }
-        });
-
-        let newBadge = null;
-        if (winner === "p1" && !isCaught) {
-          updatedPlayer.wins += 1;
-          let rewardMoney = 150 + Math.floor(Math.random() * 100);
-
-          if ((battleMode === "gym" || battleMode === "island") && gymId) {
-            const stage = GYMS.find(g => g.id === gymId) || TRIALS.find(t => t.id === gymId);
-            if (stage && !updatedPlayer.badges.includes(stage.badge)) {
-              updatedPlayer.badges.push(stage.badge);
-              newBadge = stage.badge;
-              setBadgeWon(stage.badge);
-            }
-            rewardMoney = 1500 + stage.minLevel * 20;
-            setGymId(null);
-          }
-
-          updatedPlayer.money += rewardMoney;
-          updatedPlayer.bag.pokeBalls += 2;
-          updatedPlayer.bag.potions += 1;
-
-          // EXP Yield Distribution
-          let totalExp = 0;
-          enemyParty.forEach(eMon => {
-            const expBase = POKEDEX[eMon.name]?.isLegend ? 250 : 150;
-            totalExp += Math.floor((expBase * eMon.lvl) / 5);
-          });
-
-          const activeMons = activeUuids.filter(id => updatedPlayer.team.some(m => m.uuid === id));
-          if (activeMons.length > 0) {
-            const expPerMon = Math.floor(totalExp / activeMons.length);
-            let evoPending = null;
-
-            activeMons.forEach(id => {
-              const idx = updatedPlayer.team.findIndex(m => m.uuid === id);
-              if (idx !== -1 && updatedPlayer.team[idx].hp > 0) {
-                const res = Yx(updatedPlayer.team[idx], expPerMon);
-                updatedPlayer.team[idx] = res.p;
-                if (res.readyToEvolve && !evoPending) {
-                  const oldCopy = { ...updatedPlayer.team[idx] };
-                  const evolvedCopy = Hx(oldCopy);
-                  if (evolvedCopy.name !== oldCopy.name) {
-                    evoPending = { old: oldCopy, new: evolvedCopy, index: idx };
-                  }
-                }
-              }
-            });
-
-            if (evoPending) {
-              setEvolvingMon(evoPending);
-              setPlayer(updatedPlayer);
-              saveGame(updatedPlayer);
-              setView("evolution");
-              return;
-            }
-          }
-        }
-
-        setPlayer(updatedPlayer);
-        saveGame(updatedPlayer);
-        setGymId(null);
-        setView(newBadge ? "badge_celebration" : "hub");
-      };
-
-      const handleCatch = (caughtMon, ballType) => {
-        if (!player) return;
-        const updated = { ...player };
-        if (updated.team.length < 6) updated.team.push(caughtMon);
-        else updated.box.push(caughtMon);
-        updated.bag[ballType] = Math.max(0, updated.bag[ballType] - 1);
-        setPlayer(updated);
-        saveGame(updated);
-      };
-
-      const startWildBattle = selectedParty => {
-        setPlayerParty(selectedParty);
-        const avgLvl = Math.floor(selectedParty.reduce((acc, m) => acc + m.lvl, 0) / selectedParty.length);
-        const isBossEncounter = (player?.wins || 0) % 3 === 0 && Math.random() < 0.5;
-        const legendList = ["Mewtwo", "Rayquaza", "Arceus"];
-        const normalList = Object.keys(POKEDEX).filter(k => !POKEDEX[k].isLegend);
-        const choice = isBossEncounter ? legendList[Math.floor(Math.random() * legendList.length)] : normalList[Math.floor(Math.random() * normalList.length)];
-        
-        setEnemyParty([ds(choice, avgLvl + (isBossEncounter ? 3 : 0), isBossEncounter)]);
-        setBattleMode("ai");
-        setGymId(null);
-        setView("battle");
-      };
-
-      const startGymBattle = selectedParty => {
-        if (!gymId) return;
-        const stage = GYMS.find(g => g.id === gymId) || TRIALS.find(t => t.id === gymId);
-        if (!stage) return;
-
-        setPlayerParty(selectedParty);
-        const enemies = stage.team.map(m => ds(m.name, m.lvl, true));
-        setEnemyParty(enemies);
-        setBattleMode(GYMS.some(g => g.id === gymId) ? "gym" : "island");
-        setView("battle");
-      };
-
-      const healAllTeam = async () => {
-        if (!player) return;
-        const cost = 100;
-        if (player.money < cost) {
-          alert("Not enough money to heal team!");
-          return;
-        }
-
-        playSfx('heal');
-        const updated = { ...player };
-        updated.money -= cost;
-        updated.team.forEach(mon => {
-          mon.hp = mon.maxHp;
-          mon.status = null;
-          mon.stages = { atk: 0, def: 0, spAtk: 0, spDef: 0, spd: 0, acc: 0, eva: 0 };
-        });
-        setPlayer(updated);
-        saveGame(updated);
-      };
-
-      return (
-        <div className="w-full h-full flex flex-col">
-          {view === "start" && <StartScreen onContinue={loadSave} onNewGame={startNewGame} hasSave={!!localStorage.getItem(SAVE_KEY)} />}
-          {view === "hub" && player && <MainHub player={player} onHeal={healAllTeam} onBattle={mode => { setBattleMode(mode); setView(mode === "online" ? "lobby" : "team_select"); }} onGymBattle={id => { setGymId(id); const isTrial = TRIALS.some(t => t.id === id); setBattleMode(isTrial ? "island" : "gym"); setView("team_select"); }} onShop={() => setView("shop")} />}
-          {view === "shop" && player && <PokeMart player={player} onBack={() => setView("hub")} onBuy={(itemKey, cost, qty) => { if (player.money >= cost) { const updated = { ...player }; updated.money -= cost; updated.bag[itemKey] = (updated.bag[itemKey] || 0) + qty; setPlayer(updated); saveGame(updated); } }} />}
-          {view === "team_select" && player && <SelectParty roster={player.team} player={player} onConfirm={selected => { if (battleMode === "online") { if (peerConn) { setPlayerParty(selected); peerConn.send({ type: "HANDSHAKE", team: selected }); peerConn.once("data", d => { if (d.type === "HANDSHAKE") { setEnemyParty(d.team); setView("battle"); } }); } } else if (battleMode === "gym" || battleMode === "island") startGymBattle(selected); else startWildBattle(selected); }} onBack={() => { setGymId(null); setView(battleMode === "online" ? "lobby" : "hub"); }} />}
-          {view === "lobby" && <PVPLobby onConnect={conn => { setPeerConn(conn); setBattleMode("online"); setView("team_select"); }} onBack={() => setView("hub")} />}
-          {view === "battle" && player && <BattleScene playerParty={playerParty} enemyParty={enemyParty} mode={battleMode} onBattleEnd={handleBattleEnd} onCatch={handleCatch} inventory={player.bag} peerConn={peerConn} gymId={gymId} />}
-          {view === "evolution" && evolvingMon && <EvolutionScene oldMon={evolvingMon.old} newMon={evolvingMon.new} onComplete={() => { const updated = { ...player }; updated.team[evolvingMon.index] = evolvingMon.new; setPlayer(updated); saveGame(updated); setEvolvingMon(null); setView(badgeWon ? "badge_celebration" : "hub"); }} />}
-          {view === "badge_celebration" && badgeWon && <BadgeCelebration badge={badgeWon} onContinue={() => { setBadgeWon(null); setView("hub"); }} />}
-        </div>
-      );
-    }
-
-    function StartScreen({ onContinue, onNewGame, hasSave }) {
-      const [bootState, setBootState] = useState("boot");
-      const [trainerName, setTrainerName] = useState("");
-      const [logs, setLogs] = useState([]);
-
-      useEffect(() => {
-        if (bootState !== "boot") return;
-        const sequence = [
-          "POKÉ-OS v40.0.1 INITIALIZING...",
-          "MOUNTING 3D STADIUM PERSPECTIVE ENGINE... OK",
-          "CHECKING SOUND SYNTHESIZER... OK",
-          "LOADING GEN 1-9 POKÉDEX... OK",
-          "SYSTEM READY."
-        ];
-        let delay = 0;
-        sequence.forEach((line, idx) => {
-          delay += Math.random() * 200 + 100;
-          setTimeout(() => {
-            setLogs(prev => [...prev, line]);
-            if (idx === sequence.length - 1) setTimeout(() => setBootState("title"), 500);
-          }, delay);
-        });
-      }, [bootState]);
-
-      return (
-        <div className="relative flex flex-col items-center justify-center h-full bg-slate-900 overflow-hidden select-none">
-          {bootState === "boot" ? (
-            <div className="flex flex-col justify-end p-8 h-full w-full bg-black text-green-500 font-mono text-xs md:text-sm leading-relaxed">
-              {logs.map((l, i) => <div key={i} className="mb-1">{l}</div>)}
-              <div className="animate-pulse">_</div>
+      if(screen === 'boot') {
+        return (
+          <div className="h-full flex flex-col items-center justify-center bg-slate-950 text-white relative">
+            <div className="absolute inset-0 bg-gradient-to-b from-blue-900/20 to-transparent"></div>
+            <h1 className="text-4xl md:text-6xl text-yellow-400 font-black italic mb-8 drop-shadow-[0_5px_0_#b45309] z-10 text-center leading-tight">
+              POKÉMON<br/><span className="text-2xl md:text-4xl text-white">CHAMPIONS</span>
+            </h1>
+            <div className="z-10 flex gap-4">
+              <button onClick={startNewGame} className="px-6 py-3 bg-blue-600 rounded-lg font-bold border-b-4 border-blue-800 hover:bg-blue-500 active:translate-y-1 active:border-b-0 transition-all">NEW GAME</button>
+              {player && <button onClick={() => { initAudio(); setScreen('hub'); }} className="px-6 py-3 bg-green-600 rounded-lg font-bold border-b-4 border-green-800 hover:bg-green-500 active:translate-y-1 active:border-b-0 transition-all">CONTINUE</button>}
             </div>
-          ) : (
-            <div className="relative z-20 flex flex-col items-center w-full max-w-md px-4">
-              <div className="mb-10 text-center">
-                <h1 className="text-4xl md:text-6xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-amber-500 drop-shadow-[0_5px_0_#b45309]">POKÉMON</h1>
-                <div className="inline-block mt-3 bg-indigo-600 text-white px-5 py-1 text-xs md:text-sm font-bold tracking-[0.4em] uppercase transform -skew-x-12 border border-white/20 shadow-lg">Champions 3D</div>
-              </div>
+          </div>
+        );
+      }
 
-              {bootState === "title" ? (
-                <div className="flex flex-col gap-4 w-full">
-                  {hasSave && (
-                    <button onClick={onContinue} className="w-full p-4 border-2 border-emerald-500/50 bg-emerald-950/40 hover:bg-emerald-600/30 rounded-xl text-emerald-400 font-bold text-left transition-all active:scale-95">
-                      <div className="text-base">CONTINUE</div>
-                      <div className="text-[10px] opacity-70 font-mono">Load saved trainer journey</div>
-                    </button>
-                  )}
-                  <button onClick={() => setBootState("new_game")} className="w-full p-4 border-2 border-indigo-500/50 bg-indigo-950/40 hover:bg-indigo-600/30 rounded-xl text-indigo-400 font-bold text-left transition-all active:scale-95">
-                    <div className="text-base">NEW GAME</div>
-                    <div className="text-[10px] opacity-70 font-mono">Start a fresh championship campaign</div>
-                  </button>
-                </div>
-              ) : (
-                <div className="w-full bg-slate-900/90 backdrop-blur-md p-6 rounded-2xl border border-slate-700 shadow-2xl">
-                  <p className="text-xs text-indigo-300 font-bold mb-4 tracking-widest uppercase text-center">Trainer Registration</p>
-                  <input type="text" value={trainerName} onChange={e => setTrainerName(e.target.value.toUpperCase().slice(0, 10))} className="w-full bg-black/60 text-white text-center text-lg p-3 rounded-xl border-2 border-slate-600 focus:border-yellow-400 outline-none mb-6 font-mono tracking-widest" placeholder="YOUR NAME" autoFocus />
-                  <div className="flex gap-3">
-                    <button onClick={() => setBootState("title")} className="flex-1 py-3 rounded-xl border border-slate-600 text-slate-400 font-bold text-xs hover:bg-slate-800">BACK</button>
-                    <button onClick={() => trainerName && onNewGame(trainerName)} disabled={!trainerName} className={`flex-[2] py-3 rounded-xl font-bold text-xs text-black transition-all ${trainerName ? 'bg-yellow-400 hover:bg-yellow-300' : 'bg-slate-700 text-slate-500'}`}>START JOURNEY</button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      );
-    }
+      if(screen === 'hub') {
+        return <HubScreen player={player} setScreen={setScreen} saveGame={saveGame} />;
+      }
 
-    function MainHub({ player, onHeal, onBattle, onGymBattle, onShop }) {
-      const [showGyms, setShowGyms] = useState(false);
-      const [showTrials, setShowTrials] = useState(false);
+      if(screen.startsWith('battle_')) {
+        const gymId = screen.split('_')[1];
+        return <BattleScreen player={player} gymId={gymId} setScreen={setScreen} saveGame={saveGame} />;
+      }
 
-      const badgesCount = (player.badges || []).length;
-      const canHeal = player.team.some(m => m.hp < m.maxHp || m.status !== null);
+      return null;
+    };
+
+    const HubScreen = ({ player, setScreen, saveGame }) => {
+      const maxLvl = Math.max(...player.team.map(m => m.lvl));
+      
+      const healTeam = () => {
+        playSfx('ui');
+        const p = {...player};
+        p.team.forEach(m => m.hp = m.maxHp);
+        saveGame(p);
+        alert("Your Pokémon have been fully healed!");
+      };
 
       return (
-        <div className="flex flex-col h-full bg-slate-950 p-5 items-center overflow-y-auto">
-          <header className="w-full max-w-md flex justify-between items-center bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-xl mb-6">
+        <div className="h-full flex flex-col bg-slate-900 p-4 md:p-8 overflow-y-auto">
+          <header className="bg-slate-800 p-4 rounded-xl border-2 border-slate-700 shadow-lg flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-sm text-yellow-400 font-bold uppercase">{player.name} <span className="text-xs text-slate-400">Lv.{badgesCount + 1}</span></h1>
-              <p className="text-[9px] text-slate-400 mt-1 font-mono">Wins: {player.wins} | Cash: ${player.money || 0}</p>
+              <h2 className="text-xl text-yellow-400 font-bold uppercase">{player.name}</h2>
+              <p className="text-xs text-slate-400 mt-1">Badges: {player.badges.length} | Money: ${player.money}</p>
             </div>
-            <button onClick={onHeal} disabled={!canHeal} className={`px-3 py-2 rounded-xl text-[9px] font-bold transition-all border-b-4 ${canHeal ? 'bg-pink-600 border-pink-800 hover:brightness-110 text-white active:border-b-0' : 'bg-slate-800 border-slate-900 text-slate-600 cursor-not-allowed'}`}>
-              ♥ HEAL ALL ($100)
+            <button onClick={healTeam} className="bg-pink-600 px-4 py-2 rounded-lg font-bold text-xs border-b-4 border-pink-800 active:translate-y-1 active:border-0 hover:bg-pink-500 transition-all">
+              ♥ HEAL ALL
             </button>
           </header>
 
-          <div className="grid grid-cols-2 gap-3 w-full max-w-md mb-6">
-            <button onClick={() => onBattle("ai")} className="p-4 bg-red-600 hover:bg-red-500 rounded-2xl border-b-4 border-red-900 font-bold text-xs uppercase flex flex-col items-center justify-center gap-2 active:border-b-0">
-              <i className="fa-solid fa-compass text-xl"></i> Wild Grass
-            </button>
-            <button onClick={onShop} className="p-4 bg-blue-600 hover:bg-blue-500 rounded-2xl border-b-4 border-blue-900 font-bold text-xs uppercase flex flex-col items-center justify-center gap-2 active:border-b-0">
-              <i className="fa-solid fa-store text-xl"></i> Poké Mart
-            </button>
-            <button onClick={() => setShowGyms(!showGyms)} className="p-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl border-b-4 border-emerald-900 font-bold text-xs uppercase flex flex-col items-center justify-center gap-2 active:border-b-0">
-              <i className="fa-solid fa-shield-halved text-xl"></i> Gym Stadiums
-            </button>
-            <button onClick={() => setShowTrials(!showTrials)} className="p-4 bg-purple-600 hover:bg-purple-500 rounded-2xl border-b-4 border-purple-900 font-bold text-xs uppercase flex flex-col items-center justify-center gap-2 active:border-b-0">
-              <i className="fa-solid fa-crown text-xl"></i> Island Trials
-            </button>
-            <button onClick={() => onBattle("online")} className="col-span-2 p-3.5 bg-amber-600 hover:bg-amber-500 rounded-2xl border-b-4 border-amber-900 font-bold text-xs uppercase flex items-center justify-center gap-2 active:border-b-0">
-              <i className="fa-solid fa-network-wired"></i> PVP Online Multiplayer
-            </button>
-          </div>
-
-          {showGyms && (
-            <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-6 space-y-2">
-              <span className="text-[10px] text-emerald-400 font-bold block mb-2">SELECT STADIUM GYM</span>
-              {GYMS.map(g => {
-                const cleared = (player.badges || []).includes(g.badge);
-                return (
-                  <button key={g.id} onClick={() => { setShowGyms(false); onGymBattle(g.id); }} className={`w-full p-3 rounded-xl glass-panel flex justify-between items-center text-left ${cleared ? 'border-emerald-500/50' : ''}`}>
-                    <div>
-                      <span className="text-[10px] font-bold text-white block">{g.name}</span>
-                      <span className="text-[8px] text-gray-400 font-sans">Leader {g.leader} • Lv.{g.minLevel}</span>
-                    </div>
-                    <span className="text-[9px] font-mono text-emerald-400">{cleared ? 'CLEARED' : 'CHALLENGE'}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {showTrials && (
-            <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-6 space-y-2">
-              <span className="text-[10px] text-purple-400 font-bold block mb-2">SELECT TRIAL CHALLENGE</span>
-              {TRIALS.map(t => {
-                const cleared = (player.badges || []).includes(t.badge);
-                return (
-                  <button key={t.id} onClick={() => { setShowTrials(false); onGymBattle(t.id); }} className={`w-full p-3 rounded-xl glass-panel flex justify-between items-center text-left ${cleared ? 'border-purple-500/50' : ''}`}>
-                    <div>
-                      <span className="text-[10px] font-bold text-white block">{t.name}</span>
-                      <span className="text-[8px] text-gray-400 font-sans">Kahuna {t.leader} • Lv.{t.minLevel}</span>
-                    </div>
-                    <span className="text-[9px] font-mono text-purple-400">{cleared ? 'STAMPED' : 'ENTER'}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          <div className="w-full max-w-md bg-slate-900 rounded-2xl p-4 border border-slate-800">
-            <span className="text-[10px] text-gray-400 font-bold block mb-3 uppercase">Active Squad</span>
-            <div className="grid grid-cols-3 gap-2">
-              {player.team.map(mon => (
-                <div key={mon.uuid} className="p-2 bg-slate-800/80 rounded-xl border border-slate-700/50 flex flex-col items-center">
-                  <img src={mon.sprites.front} className="w-12 h-12 pixel-art" />
-                  <span className="text-[8px] text-white font-bold truncate w-full text-center mt-1">{mon.name}</span>
-                  <span className="text-[7px] text-gray-400 font-mono">Lv.{mon.lvl}</span>
+          <h3 className="text-sm text-slate-400 font-bold mb-3 uppercase">Your Party</h3>
+          <div className="flex gap-3 overflow-x-auto pb-4 mb-6">
+            {player.team.map(mon => (
+              <div key={mon.id} className="min-w-[100px] bg-slate-800 p-3 rounded-xl border border-slate-600 flex flex-col items-center">
+                <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${mon.dexId}.png`} className="w-12 h-12 pixel-art" />
+                <span className="text-[10px] font-bold mt-2 truncate w-full text-center">{mon.name}</span>
+                <span className="text-[8px] text-yellow-400">Lv.{mon.lvl}</span>
+                <div className="w-full h-1.5 bg-slate-900 rounded-full mt-2 overflow-hidden">
+                  <div className={`h-full ${mon.hp < mon.maxHp*0.2 ? 'bg-red-500' : 'bg-green-500'}`} style={{width: `${(mon.hp/mon.maxHp)*100}%`}}></div>
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    function PokeMart({ player, onBack, onBuy }) {
-      return (
-        <div className="flex flex-col h-full bg-slate-950 p-5 items-center overflow-y-auto">
-          <header className="w-full max-w-md flex justify-between items-center mb-6">
-            <h2 className="text-sm text-yellow-400 font-bold uppercase">Poké Mart</h2>
-            <span className="text-xs text-emerald-400 font-bold font-mono">${player.money || 0}</span>
-          </header>
-
-          <div className="w-full max-w-md space-y-3 flex-1">
-            {Object.entries(ITEMS).map(([key, item]) => (
-              <div key={key} className="p-3.5 rounded-2xl glass-panel flex justify-between items-center border-slate-800">
-                <div>
-                  <span className="text-[10px] font-bold text-white block">{item.name}</span>
-                  <span className="text-[8px] text-amber-400 font-mono block mt-0.5">${item.cost}</span>
-                  <span className="text-[8px] text-gray-400 font-sans block">Owned: {player.bag[key] || 0}</span>
-                </div>
-                <button onClick={() => onBuy(key, item.cost, 1)} disabled={player.money < item.cost} className={`px-3 py-1.5 rounded-xl text-[9px] font-bold transition ${player.money >= item.cost ? 'bg-indigo-600 hover:bg-indigo-500 text-white' : 'bg-slate-800 text-slate-600 cursor-not-allowed'}`}>BUY</button>
               </div>
             ))}
           </div>
 
-          <button onClick={onBack} className="w-full max-w-md py-3 rounded-2xl bg-slate-800 text-gray-300 font-bold text-xs mt-4">LEAVE SHOP</button>
-        </div>
-      );
-    }
-
-    function SelectParty({ roster, player, onConfirm, onBack }) {
-      const [selected, setSelected] = useState([]);
-
-      const toggleSelect = uuid => {
-        if (selected.includes(uuid)) setSelected(selected.filter(id => id !== uuid));
-        else if (selected.length < 3) setSelected([...selected, uuid]);
-      };
-
-      return (
-        <div className="flex flex-col h-full bg-slate-950 p-5 items-center overflow-y-auto">
-          <header className="w-full max-w-md flex justify-between items-center mb-6">
-            <h2 className="text-sm text-yellow-400 font-bold uppercase">Select Combatants</h2>
-            <span className="text-xs text-gray-400 font-mono">{selected.length}/3</span>
-          </header>
-
-          <div className="w-full max-w-md space-y-2.5 flex-1">
-            {roster.map(mon => {
-              const isSelected = selected.includes(mon.uuid);
+          <h3 className="text-sm text-slate-400 font-bold mb-3 uppercase">Stadium Challenges</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-12">
+            {GYMS.map(gym => {
+              const locked = maxLvl < gym.lvl;
+              const cleared = player.badges.includes(gym.badge);
               return (
-                <div key={mon.uuid} onClick={() => toggleSelect(mon.uuid)} className={`p-3 rounded-2xl glass-panel flex items-center justify-between cursor-pointer border-2 transition ${isSelected ? 'border-yellow-400 bg-indigo-950/30' : 'border-transparent'}`}>
-                  <div className="flex items-center gap-3">
-                    <img src={mon.sprites.front} className="w-10 h-10 pixel-art" />
-                    <div>
-                      <span className="text-[10px] font-bold text-white block">{mon.name} (Lv.{mon.lvl})</span>
-                      <span className="text-[8px] text-gray-400 font-mono">HP: {mon.hp}/{mon.maxHp}</span>
-                    </div>
+                <div key={gym.id} onClick={() => { if(!locked) { playSfx('ui'); setScreen(`battle_${gym.id}`); } }} 
+                     className={`relative p-4 rounded-xl border-2 flex justify-between items-center transition-all ${locked ? 'bg-slate-800 border-slate-700 opacity-60' : 'bg-slate-800 border-indigo-500 hover:scale-[1.02] cursor-pointer shadow-lg'}`}>
+                  {cleared && <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10 rounded-xl"><span className="text-2xl font-bold text-yellow-400 rotate-[-15deg] border-4 border-yellow-400 p-2">CLEARED</span></div>}
+                  <div>
+                    <h4 className="font-bold text-sm text-white">{gym.name}</h4>
+                    <p className="text-[10px] text-slate-400 mt-1">Leader: {gym.leader} | {gym.type}</p>
                   </div>
-                  <i className={`fa-solid ${isSelected ? 'fa-circle-check text-yellow-400' : 'fa-circle text-gray-600'} text-base`}></i>
+                  <div className="text-right">
+                    {locked ? <span className="text-[10px] text-red-400 font-bold">Req Lv.{gym.lvl}</span> : <span className="bg-indigo-600 px-3 py-1 rounded text-[9px] font-bold">BATTLE</span>}
+                  </div>
                 </div>
               );
             })}
           </div>
-
-          <div className="flex gap-2 w-full max-w-md mt-4">
-            <button onClick={onBack} className="flex-1 py-3 rounded-2xl bg-slate-800 text-gray-300 font-bold text-xs">BACK</button>
-            <button onClick={() => selected.length > 0 && onConfirm(selected.map(id => roster.find(m => m.uuid === id)))} disabled={selected.length === 0} className={`flex-[2] py-3 rounded-2xl font-bold text-xs text-black transition ${selected.length > 0 ? 'bg-yellow-400 hover:bg-yellow-300' : 'bg-slate-800 text-slate-600 cursor-not-allowed'}`}>CONFIRM TEAM</button>
-          </div>
         </div>
       );
-    }
+    };
 
-    function PVPLobby({ onConnect, onBack }) {
-      const [myId, setMyId] = useState("");
-      const [targetId, setTargetId] = useState("");
-      const [peer, setPeer] = useState(null);
+    const BattleScreen = ({ player, gymId, setScreen, saveGame }) => {
+      const gym = GYMS.find(g => g.id === gymId);
+      
+      const [activeP1, setActiveP1] = useState(0);
+      const [activeP2, setActiveP2] = useState(0);
+      
+      // Initialize Enemy Team
+      const [enemyTeam] = useState(() => {
+        return gym.team.map(mName => createCombatant(mName, gym.lvl, true));
+      });
 
-      useEffect(() => {
-        const id = Math.random().toString(36).substring(2, 8).toUpperCase();
-        const p = new Peer(id);
-        setPeer(p);
-        p.on("open", assignedId => setMyId(assignedId));
-        p.on("connection", conn => {
-          conn.on("open", () => onConnect(conn));
-        });
-        return () => p.destroy();
-      }, []);
+      const [p1, setP1] = useState(player.team[0]);
+      const [p2, setP2] = useState(enemyTeam[0]);
 
-      const connectPeer = () => {
-        if (!peer || !targetId) return;
-        const conn = peer.connect(targetId.toUpperCase());
-        conn.on("open", () => onConnect(conn));
+      const [logMsg, setLogMsg] = useState(`Leader ${gym.leader} sent out ${p2.name}!`);
+      const [menuState, setMenuState] = useState('main'); // main, fight, switch, bag
+      const [camState, setCamState] = useState('cam-idle');
+      const [vfxList, setVfxList] = useState([]);
+      const [locked, setLocked] = useState(false);
+
+      const addVfx = (vfx) => {
+        setVfxList(prev => [...prev, vfx]);
+        setTimeout(() => {
+          setVfxList(prev => prev.filter(v => v.id !== vfx.id));
+        }, vfx.duration || 1000);
       };
 
-      return (
-        <div className="flex flex-col h-full bg-slate-950 p-6 items-center justify-center text-center">
-          <h2 className="text-xl text-indigo-400 font-bold mb-6 uppercase">Multiplayer PVP Room</h2>
+      // Turn Execution Logic
+      const executeMove = async (moveName) => {
+        if(locked) return;
+        setLocked(true);
+        setMenuState('hidden');
+
+        const move = MOVES[moveName];
+        
+        // P1 Attack
+        setLogMsg(`${p1.name} used ${move.name}!`);
+        setCamState('cam-p1-atk');
+        
+        // Player Lunge Animation (handled via pure DOM to avoid React re-render lag)
+        const p1Sprite = document.getElementById('sprite-p1');
+        const p2Sprite = document.getElementById('sprite-p2');
+        p1Sprite.classList.add('anim-lunge-p1');
+        
+        await new Promise(r => setTimeout(r, 400));
+        
+        // Impact VFX
+        playSfx('hit');
+        addVfx({ id: Date.now(), type: move.vfx, color: move.color, target: 'p2', duration: 600 });
+        p2Sprite.classList.add('flash-damage');
+        document.getElementById('camera-rig').classList.add('shake-hard');
+        
+        const dmgRes = calcDamage(p1, p2, move);
+        const newP2Hp = Math.max(0, p2.hp - dmgRes.damage);
+        setP2(prev => ({...prev, hp: newP2Hp}));
+
+        await new Promise(r => setTimeout(r, 400));
+        p1Sprite.classList.remove('anim-lunge-p1');
+        p2Sprite.classList.remove('flash-damage');
+        document.getElementById('camera-rig').classList.remove('shake-hard');
+        setCamState('cam-idle');
+
+        if(dmgRes.mult > 1) { playSfx('super'); setLogMsg("It's super effective!"); await new Promise(r=>setTimeout(r, 1000)); }
+        else if(dmgRes.mult < 1) { setLogMsg("It's not very effective..."); await new Promise(r=>setTimeout(r, 1000)); }
+
+        // P2 Faint Check
+        if(newP2Hp === 0) {
+          playSfx('faint');
+          setLogMsg(`${p2.name} fainted!`);
+          p2Sprite.classList.add('anim-faint');
+          await new Promise(r => setTimeout(r, 1500));
           
-          <div className="w-full max-w-sm glass-panel p-6 rounded-3xl border-slate-800 space-y-4">
+          // Next Enemy
+          if(activeP2 + 1 < enemyTeam.length) {
+            setActiveP2(prev => prev + 1);
+            setP2(enemyTeam[activeP2 + 1]);
+            p2Sprite.classList.remove('anim-faint');
+            setLogMsg(`Leader ${gym.leader} sent out ${enemyTeam[activeP2 + 1].name}!`);
+            await new Promise(r => setTimeout(r, 1500));
+            setMenuState('main');
+            setLocked(false);
+          } else {
+            // WIN
+            playSfx('evo');
+            setLogMsg(`You defeated Leader ${gym.leader}!`);
+            await new Promise(r => setTimeout(r, 2000));
+            
+            const updatedPlayer = {...player};
+            if(!updatedPlayer.badges.includes(gym.badge)) updatedPlayer.badges.push(gym.badge);
+            updatedPlayer.money += 1500;
+            saveGame(updatedPlayer);
+            
+            setScreen('hub');
+          }
+          return;
+        }
+
+        // --- P2 Attack Phase ---
+        await new Promise(r => setTimeout(r, 500));
+        const p2MoveName = p2.moves[Math.floor(Math.random() * p2.moves.length)];
+        const p2Move = MOVES[p2MoveName];
+
+        setLogMsg(`Enemy ${p2.name} used ${p2Move.name}!`);
+        setCamState('cam-p2-atk');
+        p2Sprite.classList.add('anim-lunge-p2');
+
+        await new Promise(r => setTimeout(r, 400));
+
+        playSfx('hit');
+        addVfx({ id: Date.now(), type: p2Move.vfx, color: p2Move.color, target: 'p1', duration: 600 });
+        p1Sprite.classList.add('flash-damage');
+        document.getElementById('camera-rig').classList.add('shake-hard');
+
+        const dmgRes2 = calcDamage(p2, p1, p2Move);
+        const newP1Hp = Math.max(0, p1.hp - dmgRes2.damage);
+        setP1(prev => ({...prev, hp: newP1Hp}));
+
+        // Sync Global Team State
+        player.team[activeP1].hp = newP1Hp; 
+
+        await new Promise(r => setTimeout(r, 400));
+        p2Sprite.classList.remove('anim-lunge-p2');
+        p1Sprite.classList.remove('flash-damage');
+        document.getElementById('camera-rig').classList.remove('shake-hard');
+        setCamState('cam-idle');
+
+        if(dmgRes2.mult > 1) { playSfx('super'); setLogMsg("It's super effective!"); await new Promise(r=>setTimeout(r, 1000)); }
+        else if(dmgRes2.mult < 1) { setLogMsg("It's not very effective..."); await new Promise(r=>setTimeout(r, 1000)); }
+
+        // P1 Faint Check
+        if(newP1Hp === 0) {
+          playSfx('faint');
+          setLogMsg(`${p1.name} fainted!`);
+          p1Sprite.classList.add('anim-faint');
+          await new Promise(r => setTimeout(r, 1500));
+          
+          const hasAlive = player.team.some(m => m.hp > 0);
+          if(hasAlive) {
+            setMenuState('switch');
+            setLogMsg("Choose your next Pokémon!");
+          } else {
+            setLogMsg("You blacked out...");
+            await new Promise(r => setTimeout(r, 2000));
+            setScreen('hub');
+          }
+          setLocked(false);
+          return;
+        }
+
+        setLogMsg(`What will ${p1.name} do?`);
+        setMenuState('main');
+        setLocked(false);
+      };
+
+      const switchMon = async (idx) => {
+        if(locked || player.team[idx].hp <= 0 || idx === activeP1) return;
+        setLocked(true);
+        setMenuState('hidden');
+        
+        const p1Sprite = document.getElementById('sprite-p1');
+        
+        if(p1.hp > 0) {
+          setLogMsg(`${p1.name}, come back!`);
+          p1Sprite.classList.add('anim-faint'); // Reusing drop anim for recall
+          await new Promise(r => setTimeout(r, 1000));
+        }
+
+        setActiveP1(idx);
+        setP1(player.team[idx]);
+        p1Sprite.classList.remove('anim-faint');
+        
+        setLogMsg(`Go! ${player.team[idx].name}!`);
+        playSfx('ui');
+        await new Promise(r => setTimeout(r, 1500));
+        
+        // If we switched because of a faint, it's our turn now. If manual switch, enemy gets a free hit.
+        if(p1.hp > 0) {
+           await enemyTurn(); // Note: Simplified calling logic
+        } else {
+           setLogMsg(`What will ${player.team[idx].name} do?`);
+           setMenuState('main');
+           setLocked(false);
+        }
+      };
+
+      // Compute estimated damage for HUD
+      const getEstimatedDmg = (moveName) => {
+          const move = MOVES[moveName];
+          if(!move || move.power === 0) return [0,0];
+          const aStat = move.category === 'Physical' ? p1.stats.atk : p1.stats.spAtk;
+          const dStat = move.category === 'Physical' ? p2.stats.def : p2.stats.spDef;
+          let baseDmg = Math.floor(Math.floor(Math.floor(2 * p1.lvl / 5 + 2) * move.power * (aStat / dStat)) / 50) + 2;
+          const stab = p1.type.includes(move.type) ? 1.5 : 1;
+          let typeMult = 1;
+          p2.type.forEach(t => { if(TYPE_CHART[move.type] && TYPE_CHART[move.type][t] !== undefined) typeMult *= TYPE_CHART[move.type][t]; });
+          
+          const min = Math.floor(baseDmg * stab * typeMult * 0.85);
+          const max = Math.floor(baseDmg * stab * typeMult * 1.0);
+          return [min, max];
+      };
+
+      return (
+        <div className="h-full flex flex-col w-full relative">
+          
+          {/* HEADER */}
+          <header className="h-14 px-4 flex items-center justify-between shrink-0 z-40 bg-[#070913]/95 border-b border-white/10">
             <div>
-              <span className="text-[9px] text-gray-400 block mb-1">YOUR TRAINER LINK ID</span>
-              <div className="bg-black/60 p-3 rounded-xl font-mono text-lg text-emerald-400 font-bold tracking-widest">{myId || "GENERATING..."}</div>
+              <h1 className="text-[11px] text-white">POKÉMON <span className="text-indigo-400">CHAMPIONS</span></h1>
+              <span className="text-[8px] text-gray-400 font-sans">{gym.name}</span>
             </div>
+            <button onClick={() => setScreen('hub')} className="text-[9px] text-red-400 border border-red-500/50 px-2 py-1 rounded hover:bg-red-500/20">FLEE</button>
+          </header>
 
-            <div className="flex items-center gap-2 my-2">
-              <div className="h-px bg-white/10 flex-1"></div>
-              <span className="text-[8px] text-gray-500">OR JOIN OPPONENT</span>
-              <div className="h-px bg-white/10 flex-1"></div>
-            </div>
+          {/* 3D ARENA VIEWPORT */}
+          <main className="flex-1 stadium-viewport relative overflow-hidden flex flex-col justify-between p-4 pb-2 bg-slate-900">
+            <div id="camera-rig" className={`camera-rig ${camState}`}>
+              
+              {/* Background & Floor */}
+              <div className={`absolute inset-[-20%] bg-layer ${gym.env} z-0`}></div>
+              <div className="absolute inset-0 stadium-lights z-0 pointer-events-none"></div>
+              
+              {/* 3D Battle Floor Ellipse */}
+              <div className={`battle-pad pad-enemy ${gym.env}`}></div>
+              <div className={`battle-pad pad-player ${gym.env}`}></div>
 
-            <input type="text" value={targetId} onChange={e => setTargetId(e.target.value.toUpperCase())} maxLength={6} placeholder="ROOM CODE" className="w-full bg-black/60 text-white text-center p-3 rounded-xl border border-slate-700 outline-none font-mono text-sm tracking-widest" />
-            <button onClick={connectPeer} disabled={!targetId} className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-xs text-white disabled:opacity-50">CONNECT TO MATCH</button>
-          </div>
-
-          <button onClick={onBack} className="mt-8 text-xs text-gray-500 hover:text-white">CANCEL & RETURN</button>
-        </div>
-      );
-    }
-
-    function EvolutionScene({ oldMon, newMon, onComplete }) {
-      useEffect(() => {
-        playSfx('evo');
-        const timer = setTimeout(onComplete, 3500);
-        return () => clearTimeout(timer);
-      }, []);
-
-      return (
-        <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center p-6 text-center">
-          <div className="w-60 h-60 rounded-full bg-indigo-500/20 blur-3xl absolute animate-pulse"></div>
-          <h2 className="text-xs text-indigo-300 font-bold mb-6 tracking-wider">WHAT? YOUR POKÉMON IS EVOLVING!</h2>
-          <img className="w-44 h-44 pixel-art object-contain anim-evo-flash z-10" src={newMon.sprites.front} />
-          <p className="text-[10px] text-white mt-8 font-mono">{oldMon.name} evolved into {newMon.name}!</p>
-        </div>
-      );
-    }
-
-    function BadgeCelebration({ badge, onContinue }) {
-      return (
-        <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-6 text-center">
-          <i className="fa-solid fa-trophy text-6xl text-yellow-400 mb-6 animate-bounce"></i>
-          <h2 className="text-sm text-white font-bold uppercase mb-2">VICTORY IN STADIUM!</h2>
-          <p className="text-xs text-yellow-400 font-bold mb-8">You earned the {badge}!</p>
-          <button onClick={onContinue} className="px-6 py-3 rounded-2xl bg-yellow-400 text-black font-bold text-xs">CONTINUE</button>
-        </div>
-      );
-    }
-
-    function BattleScene({ playerParty, enemyParty, mode, onBattleEnd, onCatch, inventory, peerConn, gymId }) {
-      const [pIdx, setPIdx] = useState(0);
-      const [eIdx, setEIdx] = useState(0);
-      const [logMsg, setLogMsg] = useState("Stadium match ready!");
-      const [isLocked, setIsLocked] = useState(false);
-      const [activeUuids, setActiveUuids] = useState(new Set([playerParty[0]?.uuid]));
-      const [camState, setCamState] = useState("cam-idle");
-
-      const pMon = playerParty[pIdx];
-      const eMon = enemyParty[eIdx];
-
-      // Determine Floor Theme
-      const currentGym = GYMS.find(g => g.id === gymId) || TRIALS.find(t => t.id === gymId);
-      const floorTheme = currentGym ? currentGym.floor : (mode === "online" ? "floor-grid" : "floor-grass");
-
-      useEffect(() => {
-        if (pMon) setActiveUuids(prev => new Set(prev).add(pMon.uuid));
-      }, [pIdx]);
-
-      const executePlayerMove = async move => {
-        if (isLocked || pMon.hp <= 0 || eMon.hp <= 0) return;
-        setIsLocked(true);
-
-        const pSprite = document.getElementById('player-sprite');
-        const eSprite = document.getElementById('enemy-sprite');
-        const scene = document.getElementById('battle-scene');
-
-        // Dynamic 3D Camera Pan to Player Attack Angle
-        setCamState(move.power >= 100 ? 'cam-ult-zoom' : 'cam-player-focus');
-        pSprite.classList.add('anim-lunge-player');
-        setLogMsg(`${pMon.name} used ${move.name}!`);
-        playSfx('hit');
-
-        setTimeout(() => {
-          pSprite.classList.remove('anim-lunge-player');
-          setCamState('cam-idle');
-
-          const result = Qx(pMon, eMon, move);
-          eMon.hp = Math.max(0, eMon.hp - result.damage);
-
-          eSprite.classList.add('flash-fx');
-          scene.classList.add('shake-hard');
-          if (result.effectiveness > 1.0) playSfx('super'); else playSfx('hit');
-
-          setTimeout(() => {
-            eSprite.classList.remove('flash-fx');
-            scene.classList.remove('shake-hard');
-
-            if (result.effectiveness > 1.0) setLogMsg("It's super effective! 💥");
-            else if (result.effectiveness < 1.0 && result.effectiveness > 0) setLogMsg("It's not very effective...");
-            else if (result.missed) setLogMsg("The move missed!");
-
-            if (eMon.hp <= 0) {
-              setLogMsg(`Enemy ${eMon.name} fainted!`);
-              playSfx('faint');
-              if (eIdx + 1 < enemyParty.length) {
-                setTimeout(() => {
-                  setEIdx(eIdx + 1);
-                  setIsLocked(false);
-                }, 1200);
-              } else {
-                setTimeout(() => onBattleEnd("p1", false, Array.from(activeUuids), playerParty), 1500);
-              }
-              return;
-            }
-
-            setTimeout(executeEnemyTurn, 900);
-          }, 400);
-        }, 380);
-      };
-
-      const executeEnemyTurn = () => {
-        const pSprite = document.getElementById('player-sprite');
-        const eSprite = document.getElementById('enemy-sprite');
-        const scene = document.getElementById('battle-scene');
-
-        const mName = eMon.moves[Math.floor(Math.random() * eMon.moves.length)];
-        const move = MOVES[mName] || { name: mName, type: eMon.type[0], power: 60 };
-
-        // Dynamic 3D Camera Pan to Enemy Attack Angle
-        setCamState('cam-enemy-focus');
-        eSprite.classList.add('anim-lunge-enemy');
-        setLogMsg(`Enemy ${eMon.name} used ${move.name}!`);
-        playSfx('hit');
-
-        setTimeout(() => {
-          eSprite.classList.remove('anim-lunge-enemy');
-          setCamState('cam-idle');
-
-          const result = Qx(eMon, pMon, move);
-          pMon.hp = Math.max(0, pMon.hp - result.damage);
-
-          pSprite.classList.add('flash-fx');
-          scene.classList.add('shake-hard');
-
-          setTimeout(() => {
-            pSprite.classList.remove('flash-fx');
-            scene.classList.remove('shake-hard');
-
-            if (pMon.hp <= 0) {
-              setLogMsg(`${pMon.name} fainted!`);
-              playSfx('faint');
-              const nextHealthy = playerParty.findIndex((m, i) => i !== pIdx && m.hp > 0);
-              if (nextHealthy !== -1) {
-                setTimeout(() => {
-                  setPIdx(nextHealthy);
-                  setIsLocked(false);
-                }, 1200);
-              } else {
-                setTimeout(() => onBattleEnd("p2", false, Array.from(activeUuids), playerParty), 1500);
-              }
-              return;
-            }
-
-            setIsLocked(false);
-            setLogMsg(`What will ${pMon.name} do?`);
-          }, 400);
-        }, 380);
-      };
-
-      const throwPokeball = ballType => {
-        if (isLocked || mode !== "ai") return;
-        setIsLocked(true);
-        const item = ITEMS[ballType];
-        setLogMsg(`Threw a ${item.name}!`);
-
-        const vfx = document.getElementById('vfx-layer');
-        const ball = document.createElement('div');
-        ball.className = 'absolute w-8 h-8 rounded-full bg-red-600 border-2 border-white shadow-2xl anim-throw z-50';
-        vfx.appendChild(ball);
-
-        setTimeout(() => {
-          const eSprite = document.getElementById('enemy-sprite');
-          eSprite.classList.add('anim-absorb');
-
-          setTimeout(() => {
-            ball.className = 'absolute w-8 h-8 rounded-full bg-red-600 border-2 border-white shadow-2xl anim-wiggle z-50';
-            ball.style.left = '75%';
-            ball.style.top = '35%';
-
-            const catchResult = xy(eMon, item.rate);
-            setTimeout(() => {
-              ball.remove();
-              if (catchResult.success) {
-                setLogMsg(`Gotcha! ${eMon.name} was caught! 🎉`);
-                playSfx('catch');
-                setTimeout(() => {
-                  onCatch(eMon, ballType);
-                  onBattleEnd("p1", true, Array.from(activeUuids), playerParty);
-                }, 1500);
-              } else {
-                setLogMsg(`Oh no! ${eMon.name} broke free!`);
-                eSprite.classList.remove('anim-absorb');
-                eSprite.style.opacity = '1';
-                setTimeout(executeEnemyTurn, 900);
-              }
-            }, 1200);
-          }, 600);
-        }, 750);
-      };
-
-      return (
-        <div className="w-full h-full flex flex-col">
-          <main id="battle-scene" className={`flex-1 stadium-viewport relative overflow-hidden flex flex-col justify-between p-4 pb-2 perspective-viewport`}>
-            <div id="vfx-layer" className="absolute inset-0 pointer-events-none z-30"></div>
-
-            <div className={`stadium-stage w-full h-full flex flex-col justify-between ${camState}`}>
-              <div class="w-full flex justify-between items-start max-w-xl mx-auto z-20 px-2">
-                <div class="glass-panel p-3 rounded-2xl w-56 border-rose-500/20 shadow-2xl">
-                  <div class="flex justify-between items-center text-[9px] mb-1">
-                    <span class="font-bold text-rose-400">{eMon.name}</span>
-                    <span class="text-gray-400 font-mono">Lv.{eMon.lvl}</span>
-                  </div>
-                  <div class="w-full h-2.5 bg-black/60 rounded-full overflow-hidden p-0.5 border border-white/10">
-                    <div class="h-full bg-emerald-400 rounded-full transition-all duration-500" style={{ width: `${Math.max(0, (eMon.hp / eMon.maxHp) * 100)}%` }}></div>
-                  </div>
-                </div>
-                <div class="relative w-36 h-36 flex items-center justify-center">
-                  <div class="mon-pedestal w-32 h-10 bg-indigo-500/20 border border-indigo-400/40 bottom-0"></div>
-                  <img id="enemy-sprite" class="pokemon-sprite pixel-art anim-idle w-32 h-32 object-contain relative z-10" src={eMon.sprites.front} />
-                </div>
+              {/* VFX Rendering Layer */}
+              <div className="vfx-layer">
+                {vfxList.map(v => {
+                  const style = {
+                    left: v.target === 'p2' ? '75%' : '25%',
+                    top: v.target === 'p2' ? '30%' : '70%',
+                    '--vfx-color': v.color,
+                    '--rot': v.target === 'p2' ? '35deg' : '-145deg'
+                  };
+                  return <div key={v.id} className={`vfx-${v.type}`} style={style}></div>
+                })}
               </div>
 
-              <div id="battle-platform" class={`absolute inset-x-8 top-1/3 bottom-20 battle-pitch ${floorTheme} rounded-[44px] -z-10 flex items-center justify-center`}></div>
-
-              <div class="w-full flex justify-between items-end max-w-xl mx-auto z-20 px-2">
-                <div class="relative w-36 h-36 flex items-center justify-center">
-                  <div class="mon-pedestal w-32 h-10 bg-emerald-500/20 border border-emerald-400/40 bottom-0"></div>
-                  <img id="player-sprite" class="pokemon-sprite pixel-art anim-idle w-32 h-32 object-contain relative z-10" src={pMon.sprites.back} />
-                </div>
-                <div class="glass-panel p-3 rounded-2xl w-56 border-indigo-500/30 shadow-2xl mb-2">
-                  <div class="flex justify-between items-center text-[9px] mb-1">
-                    <span class="font-bold text-indigo-400">{pMon.name}</span>
-                    <span class="text-gray-400 font-mono">Lv.{pMon.lvl}</span>
-                  </div>
-                  <div class="w-full h-2.5 bg-black/60 rounded-full overflow-hidden p-0.5 border border-white/10">
-                    <div class="h-full bg-emerald-400 rounded-full transition-all duration-500" style={{ width: `${Math.max(0, (pMon.hp / pMon.maxHp) * 100)}%` }}></div>
-                  </div>
-                  <div class="flex justify-between items-center text-[8px] mt-1 text-gray-400 font-mono">
-                    <span>{Math.round(pMon.hp)}/{pMon.maxHp}</span>
-                  </div>
-                </div>
+              {/* ENEMY SPRITE */}
+              <div className="sprite-container sprite-enemy">
+                <img id="sprite-p2" className="mon-sprite pixel-art anim-idle" src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${p2.dexId}.gif`} />
               </div>
+
+              {/* PLAYER SPRITE */}
+              <div className="sprite-container sprite-player">
+                <img id="sprite-p1" className="mon-sprite pixel-art anim-idle" src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/back/${p1.dexId}.gif`} />
+              </div>
+
+            </div>
+
+            {/* HUD OVERLAYS (Fixed to screen, not 3D camera) */}
+            <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-40 pointer-events-none">
+               {/* Enemy HUD */}
+               <div className="glass-panel p-3 rounded-2xl w-48 md:w-64 border-rose-500/30">
+                  <div className="flex justify-between items-center text-[9px] mb-1">
+                    <span className="font-bold text-rose-400 truncate">{p2.name}</span>
+                    <span className="text-gray-400 font-mono">Lv.{p2.lvl}</span>
+                  </div>
+                  <div className="w-full h-2.5 bg-black/80 rounded-full overflow-hidden p-0.5 border border-white/10">
+                    <div className={`h-full rounded-full transition-all duration-500 ${p2.hp/p2.maxHp > 0.5 ? 'bg-emerald-400' : p2.hp/p2.maxHp > 0.2 ? 'bg-amber-400' : 'bg-red-500'}`} style={{width: `${(p2.hp/p2.maxHp)*100}%`}}></div>
+                  </div>
+               </div>
+
+               {/* Player HUD */}
+               <div className="glass-panel p-3 rounded-2xl w-48 md:w-64 border-indigo-500/30 mt-24 md:mt-32">
+                  <div className="flex justify-between items-center text-[9px] mb-1">
+                    <span className="font-bold text-indigo-400 truncate">{p1.name}</span>
+                    <span className="text-gray-400 font-mono">Lv.{p1.lvl}</span>
+                  </div>
+                  <div className="w-full h-2.5 bg-black/80 rounded-full overflow-hidden p-0.5 border border-white/10">
+                    <div className={`h-full rounded-full transition-all duration-500 ${p1.hp/p1.maxHp > 0.5 ? 'bg-emerald-400' : p1.hp/p1.maxHp > 0.2 ? 'bg-amber-400' : 'bg-red-500'}`} style={{width: `${(p1.hp/p1.maxHp)*100}%`}}></div>
+                  </div>
+                  <div className="text-[8px] text-right font-mono mt-1 text-slate-300">{p1.hp} / {p1.maxHp}</div>
+               </div>
             </div>
           </main>
 
-          <footer className="h-44 bg-[#05060d]/95 border-t border-white/10 p-3 flex flex-col justify-between max-w-2xl mx-auto w-full z-40">
-            <div id="battle-log" className="text-[9px] text-indigo-200 h-8 flex items-center px-3 rounded-xl bg-white/5 font-mono border border-white/5">
+          {/* ACTION FOOTER */}
+          <footer className="h-48 bg-[#05060d]/95 border-t border-white/10 p-3 flex flex-col max-w-2xl mx-auto w-full z-40">
+            <div className="text-[10px] leading-relaxed text-indigo-200 h-10 flex items-center px-4 rounded-xl bg-white/5 font-mono border border-white/5 mb-2">
               {logMsg}
             </div>
 
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              {pMon.moves.map(mName => {
-                const m = MOVES[mName] || { name: mName, type: "Normal", power: 50 };
-                const range = Xx(pMon, eMon, m);
-                return (
-                  <button key={mName} onClick={() => executePlayerMove(m)} className="p-2.5 rounded-xl glass-panel flex flex-col text-left hover:border-indigo-500/50 active:scale-95 transition">
-                    <span className="text-[9px] font-bold text-white">{m.name}</span>
-                    <div className="flex justify-between w-full mt-0.5">
-                      <span className="text-[7.5px] font-mono text-blue-400">{m.type}</span>
-                      <span className="text-[7.5px] font-mono text-yellow-300">{range[0]}-{range[1]} HP</span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+            {menuState === 'main' && (
+              <div className="grid grid-cols-2 gap-2 flex-1">
+                <button onClick={() => { playSfx('ui'); setMenuState('fight'); }} className="bg-red-600 hover:bg-red-500 rounded-xl border-b-4 border-red-800 font-bold text-sm active:translate-y-1 active:border-b-0 flex items-center justify-center gap-2">⚔️ FIGHT</button>
+                <button onClick={() => { playSfx('ui'); setMenuState('switch'); }} className="bg-green-600 hover:bg-green-500 rounded-xl border-b-4 border-green-800 font-bold text-sm active:translate-y-1 active:border-b-0 flex items-center justify-center gap-2">🔄 POKÉMON</button>
+              </div>
+            )}
+
+            {menuState === 'fight' && (
+              <div className="flex flex-col h-full gap-2">
+                <div className="grid grid-cols-2 gap-2 flex-1">
+                  {p1.moves.map(mName => {
+                    const m = MOVES[mName];
+                    if(!m) return null;
+                    const estDmg = getEstimatedDmg(mName);
+                    return (
+                      <button key={mName} onClick={() => executeMove(mName)} className="glass-panel p-2 rounded-xl text-left active:scale-95 transition-transform flex flex-col justify-between" style={{borderColor: `${m.color}80`}}>
+                        <div className="flex justify-between w-full">
+                          <span className="text-[10px] font-bold text-white">{m.name}</span>
+                          <span className="text-[8px] font-bold" style={{color: m.color}}>{m.type}</span>
+                        </div>
+                        <div className="flex justify-between w-full mt-1 opacity-80">
+                          <span className="text-[8px] font-mono">PWR {m.power||'--'}</span>
+                          {m.power > 0 && <span className="text-[8px] text-yellow-300 font-mono">Dmg: {estDmg[0]}-{estDmg[1]}</span>}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+                <button onClick={() => setMenuState('main')} className="bg-slate-800 p-2 rounded-lg text-[9px] font-bold text-slate-300">BACK</button>
+              </div>
+            )}
+
+            {menuState === 'switch' && (
+              <div className="flex flex-col h-full gap-2">
+                <div className="flex overflow-x-auto gap-2 flex-1 pb-1">
+                  {player.team.map((mon, idx) => (
+                    <button key={mon.id} disabled={mon.hp <= 0 || idx === activeP1} onClick={() => switchMon(idx)} className={`min-w-[120px] p-2 rounded-xl border-2 flex flex-col items-center ${mon.hp <= 0 ? 'bg-red-950/50 border-red-900 opacity-50 grayscale' : idx === activeP1 ? 'bg-slate-700 border-yellow-500' : 'bg-slate-800 border-slate-600 active:scale-95'}`}>
+                      <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${mon.dexId}.png`} className="w-10 h-10 pixel-art" />
+                      <span className="text-[9px] font-bold mt-1 truncate w-full text-center">{mon.name}</span>
+                      <span className="text-[8px] font-mono text-slate-400">{mon.hp}/{mon.maxHp}</span>
+                    </button>
+                  ))}
+                </div>
+                {!locked && <button onClick={() => setMenuState('main')} className="bg-slate-800 p-2 rounded-lg text-[9px] font-bold text-slate-300 mt-1">BACK</button>}
+              </div>
+            )}
           </footer>
         </div>
       );
-    }
+    };
 
+    // Initialize React App
     const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<GameEngine />);
+    root.render(<App />);
   </script>
 </body>
 </html>
