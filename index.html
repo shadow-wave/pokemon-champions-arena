@@ -9,8 +9,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Tone.js Audio Engine -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-  <!-- PeerJS for Multiplayer -->
-  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <!-- React & ReactDOM (UMD - Runs without a server) -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -47,17 +45,19 @@
     }
 
     .glass-panel {
-      background: rgba(15, 23, 42, 0.88);
+      background: rgba(15, 23, 42, 0.90);
       backdrop-filter: blur(14px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
     }
 
     .no-scrollbar::-webkit-scrollbar { display: none; }
 
+    /* --- RESPONSIVE 3D STADIUM ENGINE --- */
     .stadium-viewport {
-      perspective: 1000px;
+      perspective: 1200px;
       overflow: hidden;
+      background-color: #000;
     }
 
     .camera-rig {
@@ -68,47 +68,64 @@
     }
 
     /* Fluid Camera States */
-    .cam-idle { transform: scale(1) translate(0, 0); }
-    .cam-p1-atk { transform: scale(1.15) translate(-5%, -8%) rotateY(3deg) rotateX(-2deg); }
-    .cam-p2-atk { transform: scale(1.15) translate(5%, 10%) rotateY(-3deg) rotateX(2deg); }
-    .cam-catch { transform: scale(1.1) translate(0, -10%); filter: contrast(110%); }
+    .cam-idle { transform: scale(1) translate(0, 0) rotateX(0deg); }
+    .cam-p1-atk { transform: scale(1.12) translate(-2%, -4%) rotateY(2deg) rotateX(-2deg); }
+    .cam-p2-atk { transform: scale(1.12) translate(2%, 6%) rotateY(-2deg) rotateX(2deg); }
+    .cam-catch { transform: scale(1.08) translate(0, -8%); filter: contrast(110%); }
 
-    /* 3D Floor Pedestals */
+    /* 3D Floor Pedestals (Fluid sizing for all viewports) */
     .battle-pad {
       position: absolute;
       border-radius: 50%;
-      transform: rotateX(65deg);
-      box-shadow: 0 15px 35px rgba(0,0,0,0.7), inset 0 0 20px rgba(255,255,255,0.2);
+      transform: rotateX(60deg);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.8), inset 0 0 25px rgba(255,255,255,0.25);
       transition: background 1s ease, border 1s ease, box-shadow 1s ease;
     }
 
-    .pad-player { bottom: 12%; left: 5%; width: 280px; height: 110px; z-index: 10; }
-    .pad-enemy { top: 28%; right: 10%; width: 220px; height: 85px; z-index: 5; }
+    .pad-player { bottom: 6%; left: 8%; width: min(70vw, 320px); height: min(24vw, 110px); z-index: 10; }
+    .pad-enemy { top: 28%; right: 8%; width: min(60vw, 260px); height: min(20vw, 90px); z-index: 5; }
+
+    @media (min-width: 768px) {
+      .pad-player { bottom: 10%; left: 15%; width: 360px; height: 130px; }
+      .pad-enemy { top: 22%; right: 15%; width: 280px; height: 100px; }
+    }
 
     /* Dynamic Environments */
-    .env-standard .battle-pad { background: radial-gradient(circle, #10b981 30%, #064e3b 80%); border: 5px solid #34d399; }
+    .bg-layer { transition: all 1s ease; }
+    
+    .env-standard .battle-pad { background: radial-gradient(circle, #10b981 30%, #047857 85%); border: 4px solid #34d399; }
     .env-standard .bg-layer { background: linear-gradient(to bottom, #38bdf8, #bae6fd); }
     
-    .env-rock .battle-pad { background: radial-gradient(circle, #78716c 30%, #292524 80%); border: 5px solid #a8a29e; }
-    .env-rock .bg-layer { background: linear-gradient(to bottom, #44403c, #78716c); }
+    .env-rock .battle-pad { background: radial-gradient(circle, #78716c 30%, #1c1917 85%); border: 4px solid #a8a29e; }
+    .env-rock .bg-layer { background: linear-gradient(to bottom, #292524, #57534e); }
     
-    .env-water .battle-pad { background: radial-gradient(circle, #0284c7 30%, #082f49 80%); border: 5px solid #38bdf8; box-shadow: 0 15px 35px rgba(0,0,0,0.7), inset 0 0 30px rgba(56, 189, 248, 0.5); }
-    .env-water .bg-layer { background: linear-gradient(to bottom, #0c4a6e, #0284c7); }
+    .env-water .battle-pad { background: radial-gradient(circle, #0284c7 30%, #032b43 85%); border: 4px solid #38bdf8; box-shadow: 0 20px 40px rgba(0,0,0,0.8), inset 0 0 30px rgba(56, 189, 248, 0.6); }
+    .env-water .bg-layer { background: linear-gradient(to bottom, #075985, #0284c7); }
     
-    .env-electric .battle-pad { background: radial-gradient(circle, #ca8a04 30%, #422006 80%); border: 5px solid #fde047; }
-    .env-electric .bg-layer { background: linear-gradient(to bottom, #1e293b, #451a03); }
+    .env-electric .battle-pad { background: radial-gradient(circle, #ca8a04 30%, #271102 85%); border: 4px solid #fde047; }
+    .env-electric .bg-layer { background: linear-gradient(to bottom, #0f172a, #381b04); }
     
-    .env-fire .battle-pad { background: radial-gradient(circle, #dc2626 30%, #450a0a 80%); border: 5px solid #fca5a5; box-shadow: 0 15px 35px rgba(0,0,0,0.7), inset 0 0 40px rgba(239, 68, 68, 0.6); }
-    .env-fire .bg-layer { background: linear-gradient(to bottom, #450a0a, #991b1b); }
+    .env-fire .battle-pad { background: radial-gradient(circle, #dc2626 30%, #2d0505 85%); border: 4px solid #fca5a5; box-shadow: 0 20px 40px rgba(0,0,0,0.8), inset 0 0 45px rgba(239, 68, 68, 0.7); }
+    .env-fire .bg-layer { background: linear-gradient(to bottom, #2d0505, #991b1b); }
     
-    .env-psychic .battle-pad { background: radial-gradient(circle, #9333ea 30%, #3b0764 80%); border: 5px solid #d8b4fe; }
-    .env-psychic .bg-layer { background: linear-gradient(to bottom, #2e1065, #7e22ce); }
+    .env-psychic .battle-pad { background: radial-gradient(circle, #9333ea 30%, #23033d 85%); border: 4px solid #d8b4fe; }
+    .env-psychic .bg-layer { background: linear-gradient(to bottom, #1e0b36, #7e22ce); }
     
-    .env-poison .battle-pad { background: radial-gradient(circle, #a21caf 30%, #4a044e 80%); border: 5px solid #f0abfc; }
-    .env-poison .bg-layer { background: linear-gradient(to bottom, #1e1b4b, #4a044e); }
+    .env-poison .battle-pad { background: radial-gradient(circle, #a21caf 30%, #2e0232 85%); border: 4px solid #f0abfc; }
+    .env-poison .bg-layer { background: linear-gradient(to bottom, #110e2b, #4a044e); }
     
-    .env-dragon .battle-pad { background: radial-gradient(circle, #4338ca 30%, #1e1b4b 80%); border: 5px solid #818cf8; }
-    .env-dragon .bg-layer { background: linear-gradient(to bottom, #0f172a, #312e81); }
+    .env-dragon .battle-pad { background: radial-gradient(circle, #4f46e5 30%, #0f0d2b 85%); border: 4px solid #818cf8; }
+    .env-dragon .bg-layer { background: linear-gradient(to bottom, #090d16, #312e81); }
+
+    /* Parallax Patterns & Weather FX */
+    .stadium-lights {
+      background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.45) 0%, transparent 65%);
+      mix-blend-mode: overlay;
+    }
+    .grid-floor {
+      background-image: linear-gradient(transparent 90%, rgba(255,255,255,0.12) 90%), linear-gradient(90deg, transparent 90%, rgba(255,255,255,0.12) 90%);
+      background-size: 35px 35px;
+    }
 
     .sprite-container {
       position: absolute;
@@ -118,132 +135,93 @@
       transition: opacity 0.3s ease;
     }
     
-    .sprite-player { bottom: 18%; left: 10%; width: 200px; height: 200px; z-index: 20; }
-    .sprite-enemy { top: 15%; right: 12%; width: 160px; height: 160px; z-index: 15; }
+    .sprite-player { bottom: 10%; left: 6%; width: min(42vw, 240px); height: min(42vw, 240px); z-index: 20; }
+    .sprite-enemy { top: 16%; right: 6%; width: min(38vw, 210px); height: min(38vw, 210px); z-index: 15; }
+
+    @media (min-width: 768px) {
+      .sprite-player { bottom: 14%; left: 16%; width: 280px; height: 280px; }
+      .sprite-enemy { top: 10%; right: 16%; width: 250px; height: 250px; }
+    }
 
     .mon-sprite {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      filter: drop-shadow(0 15px 15px rgba(0,0,0,0.5));
+      width: 100%; height: 100%; object-fit: contain;
+      filter: drop-shadow(0 15px 20px rgba(0,0,0,0.6));
       transition: filter 0.3s ease;
     }
 
+    @keyframes sprite-idle {
+        0%, 100% { transform: scale(1) translateY(0); filter: drop-shadow(0 15px 20px rgba(0,0,0,0.6)); }
+        50% { transform: scale(1.03) translateY(-5px); filter: drop-shadow(0 25px 25px rgba(0,0,0,0.4)); }
+    }
+    .anim-idle { animation: sprite-idle 3s ease-in-out infinite; }
+
     @keyframes lunge-p1 {
       0%, 100% { transform: translate(0, 0) scale(1); }
-      50% { transform: translate(60px, -20px) scale(1.1) rotate(5deg); }
+      50% { transform: translate(70px, -25px) scale(1.12) rotate(6deg); }
     }
     .anim-lunge-p1 { animation: lunge-p1 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
 
     @keyframes lunge-p2 {
       0%, 100% { transform: translate(0, 0) scale(1); }
-      50% { transform: translate(-60px, 20px) scale(1.1) rotate(-5deg); }
+      50% { transform: translate(-70px, 25px) scale(1.12) rotate(-6deg); }
     }
     .anim-lunge-p2 { animation: lunge-p2 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
 
     @keyframes faint-drop {
       0% { transform: translateY(0); opacity: 1; filter: grayscale(0); }
-      100% { transform: translateY(50px); opacity: 0; filter: grayscale(1); }
+      100% { transform: translateY(60px); opacity: 0; filter: grayscale(1); }
     }
     .anim-faint { animation: faint-drop 1s ease-in forwards; }
 
-    @keyframes shake-soft {
+    @keyframes shake-hard {
       0%, 100% { transform: translate(0,0); }
-      25% { transform: translate(3px, 3px) rotate(1deg); }
-      75% { transform: translate(-3px, -3px) rotate(-1deg); }
+      25% { transform: translate(18px, 15px) rotate(2deg); }
+      75% { transform: translate(-18px, -12px) rotate(-2deg); }
     }
-    .shake-soft { animation: shake-soft 0.2s linear infinite; }
-
-    @keyframes shake-violent {
-      0%, 100% { transform: translate(0,0) scale(1); filter: brightness(1); }
-      25% { transform: translate(25px, -25px) scale(1.05); filter: brightness(1.5); }
-      50% { transform: translate(-25px, 25px) scale(0.95); }
-      75% { transform: translate(20px, 10px) scale(1.03); }
-    }
-    .shake-violent { animation: shake-violent 0.15s cubic-bezier(0.36, 0.07, 0.19, 0.97) infinite; }
+    .shake-hard { animation: shake-hard 0.3s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
 
     .flash-damage { animation: flash-red 0.4s ease-out forwards; }
     @keyframes flash-red {
       0%, 100% { filter: brightness(1) sepia(0); }
-      50% { filter: brightness(3) sepia(1) hue-rotate(-50deg) saturate(5); }
+      50% { filter: brightness(3.5) sepia(1) hue-rotate(-50deg) saturate(6); }
     }
 
-    .vfx-layer {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      z-index: 50;
-    }
+    .vfx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 50; }
 
     .vfx-orb {
-      position: absolute;
-      width: 40px; height: 40px;
+      position: absolute; width: 45px; height: 45px;
       background: radial-gradient(circle, #fff, var(--vfx-color));
-      border-radius: 50%;
-      box-shadow: 0 0 20px var(--vfx-color), 0 0 40px var(--vfx-color);
+      border-radius: 50%; box-shadow: 0 0 25px var(--vfx-color), 0 0 50px var(--vfx-color);
       transform: translate(-50%, -50%);
     }
 
     .vfx-slash {
-      position: absolute;
-      width: 0px; height: 12px;
-      background: white;
-      box-shadow: 0 0 20px white, 0 0 40px var(--vfx-color);
-      transform: translate(-50%, -50%) rotate(var(--rot));
-      border-radius: 6px;
+      position: absolute; width: 0px; height: 14px;
+      background: white; box-shadow: 0 0 25px white, 0 0 50px var(--vfx-color);
+      transform: translate(-50%, -50%) rotate(var(--rot)); border-radius: 7px;
       animation: slash-anim 0.3s ease-out forwards;
     }
-    @keyframes slash-anim {
-      50% { width: 150px; opacity: 1; }
-      100% { width: 150px; opacity: 0; }
-    }
+    @keyframes slash-anim { 50% { width: 170px; opacity: 1; } 100% { width: 170px; opacity: 0; } }
 
     .vfx-beam {
-      position: absolute;
-      height: 60px;
+      position: absolute; height: 70px;
       background: linear-gradient(90deg, transparent, white 20%, var(--vfx-color) 50%, transparent);
-      box-shadow: 0 0 30px var(--vfx-color);
-      border-radius: 30px;
-      transform-origin: left center;
-      animation: beam-anim 0.5s ease-out forwards;
+      box-shadow: 0 0 35px var(--vfx-color); border-radius: 35px;
+      transform-origin: left center; animation: beam-anim 0.5s ease-out forwards;
     }
-    @keyframes beam-anim {
-      0% { width: 0; opacity: 1; }
-      50% { width: 100%; opacity: 1; height: 80px; }
-      100% { width: 100%; opacity: 0; height: 0px; }
-    }
+    @keyframes beam-anim { 0% { width: 0; opacity: 1; } 50% { width: 100%; opacity: 1; height: 90px; } 100% { width: 100%; opacity: 0; height: 0px; } }
 
     .vfx-impact {
-      position: absolute;
-      width: 150px; height: 150px;
-      border-radius: 50%;
+      position: absolute; width: 160px; height: 160px; border-radius: 50%;
       background: radial-gradient(circle, white 10%, var(--vfx-color) 40%, transparent 80%);
-      transform: translate(-50%, -50%) scale(0);
-      mix-blend-mode: screen;
+      transform: translate(-50%, -50%) scale(0); mix-blend-mode: screen;
       animation: impact-anim 0.4s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
     }
-    @keyframes impact-anim {
-      50% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
-      100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
-    }
-
-    .vfx-pokeball {
-      position: absolute;
-      width: 32px; height: 32px;
-      background: linear-gradient(to bottom, #ef4444 50%, white 50%);
-      border: 3px solid #1e293b;
-      border-radius: 50%;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.5), inset -5px -5px 10px rgba(0,0,0,0.2);
-    }
-    .vfx-pokeball::before {
-      content: ''; position: absolute;
-      top: 50%; left: 50%; transform: translate(-50%, -50%);
-      width: 10px; height: 10px; background: white; border: 2px solid #1e293b; border-radius: 50%;
-    }
+    @keyframes impact-anim { 50% { transform: translate(-50%, -50%) scale(1.6); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; } }
 
     @keyframes throw-arc {
       0% { left: 20%; bottom: 20%; transform: scale(1) rotate(0deg); opacity: 1; }
-      50% { transform: scale(1.5) rotate(360deg) translateY(-100px); }
+      50% { transform: scale(1.5) rotate(360deg) translateY(-120px); }
       100% { left: 75%; bottom: 55%; transform: scale(0.8) rotate(720deg); opacity: 1; }
     }
     .anim-throw-ball { animation: throw-arc 0.8s cubic-bezier(0.2, 0.8, 0.3, 1) forwards; }
@@ -254,22 +232,16 @@
       75% { transform: rotate(25deg) scale(0.8); }
     }
     .anim-ball-wiggle { animation: ball-wiggle 0.5s ease-in-out; }
-    
-    @keyframes absorb-mon {
-      0% { transform: scale(1); opacity: 1; filter: brightness(1); }
-      100% { transform: scale(0.05); opacity: 0; filter: brightness(10) sepia(1) hue-rotate(-50deg); }
-    }
-    .anim-absorb { animation: absorb-mon 0.6s ease-in forwards; }
   </style>
 </head>
 <body>
-  <!-- Root element for React -->
+  <!-- Root container for React application -->
   <div id="root" class="w-full h-full relative"></div>
 
-  <script type="text/babel" data-type="module">
+  <script type="text/babel">
     const { useState, useEffect, useRef, useMemo, useCallback } = React;
 
-    // --- GAME DATABASE --- //
+    // --- COMPLETE GAME DATABASE (GEN 1 - 9) --- //
     const TYPE_CHART = {
       Normal:  { Rock: 0.5, Ghost: 0, Steel: 0.5 },
       Fire:    { Fire: 0.5, Water: 0.5, Grass: 2, Ice: 2, Bug: 2, Rock: 0.5, Dragon: 0.5, Steel: 2 },
@@ -311,11 +283,11 @@
       "Aqua Step":     { name: "Aqua Step", type: "Water", category: "Physical", power: 80, accuracy: 1, color: "#0ea5e9", vfx: "slash" },
       "Thunder Shock": { name: "Thunder Shock", type: "Electric", category: "Special", power: 40, accuracy: 1, color: "#fde047", vfx: "orb" },
       "Thunderbolt":   { name: "Thunderbolt", type: "Electric", category: "Special", power: 90, accuracy: 1, color: "#facc15", vfx: "beam" },
-      "Thunder":       { name: "Thunder", type: "Electric", category: "Special", power: 110, accuracy: 0.7, color: "#eab308", vfx: "strike" },
+      "Thunder":       { name: "Thunder", type: "Electric", category: "Special", power: 110, accuracy: 0.7, color: "#eab308", vfx: "impact" },
       "Ice Beam":      { name: "Ice Beam", type: "Ice", category: "Special", power: 90, accuracy: 1, color: "#67e8f9", vfx: "beam" },
       "Blizzard":      { name: "Blizzard", type: "Ice", category: "Special", power: 110, accuracy: 0.7, color: "#06b6d4", vfx: "impact" },
       "Rock Throw":    { name: "Rock Throw", type: "Rock", category: "Physical", power: 50, accuracy: 0.9, color: "#a8a29e", vfx: "orb" },
-      "Earthquake":    { name: "Earthquake", type: "Ground", category: "Physical", power: 100, accuracy: 1, color: "#ca8a04", vfx: "shockwave" },
+      "Earthquake":    { name: "Earthquake", type: "Ground", category: "Physical", power: 100, accuracy: 1, color: "#ca8a04", vfx: "impact" },
       "Dragon Rush":   { name: "Dragon Rush", type: "Dragon", category: "Physical", power: 100, accuracy: 0.75, color: "#6366f1", vfx: "impact" },
       "Shadow Ball":   { name: "Shadow Ball", type: "Ghost", category: "Special", power: 80, accuracy: 1, color: "#a855f7", vfx: "orb" },
       "Psychic":       { name: "Psychic", type: "Psychic", category: "Special", power: 90, accuracy: 1, color: "#ec4899", vfx: "impact" },
@@ -325,7 +297,7 @@
       "Outrage":       { name: "Outrage", type: "Dragon", category: "Physical", power: 120, accuracy: 1, color: "#312e81", vfx: "impact" },
       "Flash Cannon":  { name: "Flash Cannon", type: "Steel", category: "Special", power: 80, accuracy: 1, color: "#cbd5e1", vfx: "beam" },
       "Iron Tail":     { name: "Iron Tail", type: "Steel", category: "Physical", power: 100, accuracy: 0.75, color: "#94a3b8", vfx: "slash" },
-      "Gigaton Hammer":{ name: "Gigaton Hammer", type: "Steel", category: "Physical", power: 160, accuracy: 1, color: "#f43f5e", vfx: "strike" },
+      "Gigaton Hammer":{ name: "Gigaton Hammer", type: "Steel", category: "Physical", power: 160, accuracy: 1, color: "#f43f5e", vfx: "impact" },
       "Moonblast":     { name: "Moonblast", type: "Fairy", category: "Special", power: 95, accuracy: 1, color: "#f472b6", vfx: "orb" },
       "Play Rough":    { name: "Play Rough", type: "Fairy", category: "Physical", power: 90, accuracy: 0.9, color: "#fb7185", vfx: "impact" },
       "Dark Pulse":    { name: "Dark Pulse", type: "Dark", category: "Special", power: 80, accuracy: 1, color: "#64748b", vfx: "beam" },
@@ -442,9 +414,8 @@
       const [screen, setScreen] = useState('boot');
       const [player, setPlayer] = useState(null);
 
-      // Load Save
       useEffect(() => {
-        const save = localStorage.getItem('poke_champs_v1');
+        const save = localStorage.getItem('poke_champs_v3');
         if(save) {
           setPlayer(JSON.parse(save));
         }
@@ -452,7 +423,7 @@
 
       const saveGame = (data) => {
         setPlayer(data);
-        localStorage.setItem('poke_champs_v1', JSON.stringify(data));
+        localStorage.setItem('poke_champs_v3', JSON.stringify(data));
       };
 
       const startNewGame = () => {
@@ -470,14 +441,15 @@
 
       if(screen === 'boot') {
         return (
-          <div className="h-full flex flex-col items-center justify-center bg-slate-950 text-white relative">
-            <div className="absolute inset-0 bg-gradient-to-b from-blue-900/20 to-transparent"></div>
-            <h1 className="text-4xl md:text-6xl text-yellow-400 font-black italic mb-8 drop-shadow-[0_5px_0_#b45309] z-10 text-center leading-tight">
-              POKÉMON<br/><span className="text-2xl md:text-4xl text-white">CHAMPIONS</span>
+          <div className="h-full flex flex-col items-center justify-center bg-slate-950 text-white relative px-4">
+            <div className="absolute inset-0 bg-gradient-to-b from-blue-900/20 to-transparent z-0 pointer-events-none"></div>
+            <div className="absolute inset-0 grid-floor z-0 pointer-events-none opacity-20"></div>
+            <h1 className="text-3xl sm:text-5xl md:text-6xl text-yellow-400 font-black italic mb-8 drop-shadow-[0_5px_0_#b45309] z-10 text-center leading-tight">
+              POKÉMON<br/><span className="text-xl sm:text-3xl md:text-4xl text-white">CHAMPIONS</span>
             </h1>
-            <div className="z-10 flex gap-4">
-              <button onClick={startNewGame} className="px-6 py-3 bg-blue-600 rounded-lg font-bold border-b-4 border-blue-800 hover:bg-blue-500 active:translate-y-1 active:border-b-0 transition-all">NEW GAME</button>
-              {player && <button onClick={() => { initAudio(); setScreen('hub'); }} className="px-6 py-3 bg-green-600 rounded-lg font-bold border-b-4 border-green-800 hover:bg-green-500 active:translate-y-1 active:border-b-0 transition-all">CONTINUE</button>}
+            <div className="z-10 flex flex-col sm:flex-row gap-4 w-full max-w-xs sm:max-w-none sm:w-auto">
+              <button onClick={startNewGame} className="px-6 py-3 bg-blue-600 rounded-lg font-bold border-b-4 border-blue-800 hover:bg-blue-500 active:translate-y-1 active:border-b-0 transition-all text-xs sm:text-sm">NEW GAME</button>
+              {player && <button onClick={() => { initAudio(); setScreen('hub'); }} className="px-6 py-3 bg-green-600 rounded-lg font-bold border-b-4 border-green-800 hover:bg-green-500 active:translate-y-1 active:border-b-0 transition-all text-xs sm:text-sm">CONTINUE</button>}
             </div>
           </div>
         );
@@ -503,25 +475,24 @@
         const p = {...player};
         p.team.forEach(m => m.hp = m.maxHp);
         saveGame(p);
-        alert("Your Pokémon have been fully healed!");
       };
 
       return (
         <div className="h-full flex flex-col bg-slate-900 p-4 md:p-8 overflow-y-auto">
-          <header className="bg-slate-800 p-4 rounded-xl border-2 border-slate-700 shadow-lg flex justify-between items-center mb-6">
+          <header className="bg-slate-800 p-4 rounded-xl border-2 border-slate-700 shadow-lg flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
             <div>
-              <h2 className="text-xl text-yellow-400 font-bold uppercase">{player.name}</h2>
-              <p className="text-xs text-slate-400 mt-1">Badges: {player.badges.length} | Money: ${player.money}</p>
+              <h2 className="text-lg sm:text-xl text-yellow-400 font-bold uppercase">{player.name}</h2>
+              <p className="text-[10px] sm:text-xs text-slate-400 mt-1">Badges: {player.badges.length} | Money: ${player.money}</p>
             </div>
-            <button onClick={healTeam} className="bg-pink-600 px-4 py-2 rounded-lg font-bold text-xs border-b-4 border-pink-800 active:translate-y-1 active:border-0 hover:bg-pink-500 transition-all">
+            <button onClick={healTeam} className="w-full sm:w-auto bg-pink-600 px-4 py-2 rounded-lg font-bold text-xs border-b-4 border-pink-800 active:translate-y-1 active:border-0 hover:bg-pink-500 transition-all">
               ♥ HEAL ALL
             </button>
           </header>
 
-          <h3 className="text-sm text-slate-400 font-bold mb-3 uppercase">Your Party</h3>
-          <div className="flex gap-3 overflow-x-auto pb-4 mb-6">
+          <h3 className="text-xs text-slate-400 font-bold mb-3 uppercase">Your Party</h3>
+          <div className="flex gap-3 overflow-x-auto pb-4 mb-6 no-scrollbar">
             {player.team.map(mon => (
-              <div key={mon.id} className="min-w-[100px] bg-slate-800 p-3 rounded-xl border border-slate-600 flex flex-col items-center">
+              <div key={mon.id} className="min-w-[100px] sm:min-w-[120px] bg-slate-800 p-3 rounded-xl border border-slate-600 flex flex-col items-center">
                 <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${mon.dexId}.png`} className="w-12 h-12 pixel-art" />
                 <span className="text-[10px] font-bold mt-2 truncate w-full text-center">{mon.name}</span>
                 <span className="text-[8px] text-yellow-400">Lv.{mon.lvl}</span>
@@ -532,21 +503,21 @@
             ))}
           </div>
 
-          <h3 className="text-sm text-slate-400 font-bold mb-3 uppercase">Stadium Challenges</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-12">
+          <h3 className="text-xs text-slate-400 font-bold mb-3 uppercase">Stadium Challenges</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-12">
             {GYMS.map(gym => {
               const locked = maxLvl < gym.lvl;
               const cleared = player.badges.includes(gym.badge);
               return (
                 <div key={gym.id} onClick={() => { if(!locked) { playSfx('ui'); setScreen(`battle_${gym.id}`); } }} 
                      className={`relative p-4 rounded-xl border-2 flex justify-between items-center transition-all ${locked ? 'bg-slate-800 border-slate-700 opacity-60' : 'bg-slate-800 border-indigo-500 hover:scale-[1.02] cursor-pointer shadow-lg'}`}>
-                  {cleared && <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10 rounded-xl"><span className="text-2xl font-bold text-yellow-400 rotate-[-15deg] border-4 border-yellow-400 p-2">CLEARED</span></div>}
+                  {cleared && <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10 rounded-xl"><span className="text-xl font-bold text-yellow-400 rotate-[-15deg] border-4 border-yellow-400 p-2 drop-shadow-md">CLEARED</span></div>}
                   <div>
-                    <h4 className="font-bold text-sm text-white">{gym.name}</h4>
-                    <p className="text-[10px] text-slate-400 mt-1">Leader: {gym.leader} | {gym.type}</p>
+                    <h4 className="font-bold text-xs sm:text-sm text-white">{gym.name}</h4>
+                    <p className="text-[9px] text-slate-400 mt-1">Leader: {gym.leader} | {gym.type}</p>
                   </div>
                   <div className="text-right">
-                    {locked ? <span className="text-[10px] text-red-400 font-bold">Req Lv.{gym.lvl}</span> : <span className="bg-indigo-600 px-3 py-1 rounded text-[9px] font-bold">BATTLE</span>}
+                    {locked ? <span className="text-[9px] text-red-400 font-bold">Req Lv.{gym.lvl}</span> : <span className="bg-indigo-600 px-3 py-1.5 rounded text-[9px] font-bold shadow-md">BATTLE</span>}
                   </div>
                 </div>
               );
@@ -562,7 +533,6 @@
       const [activeP1, setActiveP1] = useState(0);
       const [activeP2, setActiveP2] = useState(0);
       
-      // Initialize Enemy Team
       const [enemyTeam] = useState(() => {
         return gym.team.map(mName => createCombatant(mName, gym.lvl, true));
       });
@@ -571,7 +541,7 @@
       const [p2, setP2] = useState(enemyTeam[0]);
 
       const [logMsg, setLogMsg] = useState(`Leader ${gym.leader} sent out ${p2.name}!`);
-      const [menuState, setMenuState] = useState('main'); // main, fight, switch, bag
+      const [menuState, setMenuState] = useState('main');
       const [camState, setCamState] = useState('cam-idle');
       const [vfxList, setVfxList] = useState([]);
       const [locked, setLocked] = useState(false);
@@ -583,7 +553,6 @@
         }, vfx.duration || 1000);
       };
 
-      // Turn Execution Logic
       const executeMove = async (moveName) => {
         if(locked) return;
         setLocked(true);
@@ -591,18 +560,15 @@
 
         const move = MOVES[moveName];
         
-        // P1 Attack
         setLogMsg(`${p1.name} used ${move.name}!`);
         setCamState('cam-p1-atk');
         
-        // Player Lunge Animation (handled via pure DOM to avoid React re-render lag)
         const p1Sprite = document.getElementById('sprite-p1');
         const p2Sprite = document.getElementById('sprite-p2');
         p1Sprite.classList.add('anim-lunge-p1');
         
         await new Promise(r => setTimeout(r, 400));
         
-        // Impact VFX
         playSfx('hit');
         addVfx({ id: Date.now(), type: move.vfx, color: move.color, target: 'p2', duration: 600 });
         p2Sprite.classList.add('flash-damage');
@@ -618,30 +584,27 @@
         document.getElementById('camera-rig').classList.remove('shake-hard');
         setCamState('cam-idle');
 
-        if(dmgRes.mult > 1) { playSfx('super'); setLogMsg("It's super effective!"); await new Promise(r=>setTimeout(r, 1000)); }
-        else if(dmgRes.mult < 1) { setLogMsg("It's not very effective..."); await new Promise(r=>setTimeout(r, 1000)); }
+        if(dmgRes.mult > 1) { playSfx('super'); setLogMsg("It's super effective!"); await new Promise(r=>setTimeout(r, 800)); }
+        else if(dmgRes.mult < 1) { setLogMsg("It's not very effective..."); await new Promise(r=>setTimeout(r, 800)); }
 
-        // P2 Faint Check
         if(newP2Hp === 0) {
           playSfx('faint');
           setLogMsg(`${p2.name} fainted!`);
           p2Sprite.classList.add('anim-faint');
-          await new Promise(r => setTimeout(r, 1500));
+          await new Promise(r => setTimeout(r, 1200));
           
-          // Next Enemy
           if(activeP2 + 1 < enemyTeam.length) {
             setActiveP2(prev => prev + 1);
             setP2(enemyTeam[activeP2 + 1]);
             p2Sprite.classList.remove('anim-faint');
             setLogMsg(`Leader ${gym.leader} sent out ${enemyTeam[activeP2 + 1].name}!`);
-            await new Promise(r => setTimeout(r, 1500));
+            await new Promise(r => setTimeout(r, 1200));
             setMenuState('main');
             setLocked(false);
           } else {
-            // WIN
             playSfx('evo');
             setLogMsg(`You defeated Leader ${gym.leader}!`);
-            await new Promise(r => setTimeout(r, 2000));
+            await new Promise(r => setTimeout(r, 1500));
             
             const updatedPlayer = {...player};
             if(!updatedPlayer.badges.includes(gym.badge)) updatedPlayer.badges.push(gym.badge);
@@ -653,8 +616,7 @@
           return;
         }
 
-        // --- P2 Attack Phase ---
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 400));
         const p2MoveName = p2.moves[Math.floor(Math.random() * p2.moves.length)];
         const p2Move = MOVES[p2MoveName];
 
@@ -672,9 +634,7 @@
         const dmgRes2 = calcDamage(p2, p1, p2Move);
         const newP1Hp = Math.max(0, p1.hp - dmgRes2.damage);
         setP1(prev => ({...prev, hp: newP1Hp}));
-
-        // Sync Global Team State
-        player.team[activeP1].hp = newP1Hp; 
+        player.team[activeP1].hp = newP1Hp;
 
         await new Promise(r => setTimeout(r, 400));
         p2Sprite.classList.remove('anim-lunge-p2');
@@ -682,15 +642,14 @@
         document.getElementById('camera-rig').classList.remove('shake-hard');
         setCamState('cam-idle');
 
-        if(dmgRes2.mult > 1) { playSfx('super'); setLogMsg("It's super effective!"); await new Promise(r=>setTimeout(r, 1000)); }
-        else if(dmgRes2.mult < 1) { setLogMsg("It's not very effective..."); await new Promise(r=>setTimeout(r, 1000)); }
+        if(dmgRes2.mult > 1) { playSfx('super'); setLogMsg("It's super effective!"); await new Promise(r=>setTimeout(r, 800)); }
+        else if(dmgRes2.mult < 1) { setLogMsg("It's not very effective..."); await new Promise(r=>setTimeout(r, 800)); }
 
-        // P1 Faint Check
         if(newP1Hp === 0) {
           playSfx('faint');
           setLogMsg(`${p1.name} fainted!`);
           p1Sprite.classList.add('anim-faint');
-          await new Promise(r => setTimeout(r, 1500));
+          await new Promise(r => setTimeout(r, 1200));
           
           const hasAlive = player.team.some(m => m.hp > 0);
           if(hasAlive) {
@@ -698,7 +657,7 @@
             setLogMsg("Choose your next Pokémon!");
           } else {
             setLogMsg("You blacked out...");
-            await new Promise(r => setTimeout(r, 2000));
+            await new Promise(r => setTimeout(r, 1500));
             setScreen('hub');
           }
           setLocked(false);
@@ -719,8 +678,8 @@
         
         if(p1.hp > 0) {
           setLogMsg(`${p1.name}, come back!`);
-          p1Sprite.classList.add('anim-faint'); // Reusing drop anim for recall
-          await new Promise(r => setTimeout(r, 1000));
+          p1Sprite.classList.add('anim-faint');
+          await new Promise(r => setTimeout(r, 800));
         }
 
         setActiveP1(idx);
@@ -729,64 +688,40 @@
         
         setLogMsg(`Go! ${player.team[idx].name}!`);
         playSfx('ui');
-        await new Promise(r => setTimeout(r, 1500));
+        await new Promise(r => setTimeout(r, 1200));
         
-        // If we switched because of a faint, it's our turn now. If manual switch, enemy gets a free hit.
-        if(p1.hp > 0) {
-           await enemyTurn(); // Note: Simplified calling logic
-        } else {
-           setLogMsg(`What will ${player.team[idx].name} do?`);
-           setMenuState('main');
-           setLocked(false);
-        }
-      };
-
-      // Compute estimated damage for HUD
-      const getEstimatedDmg = (moveName) => {
-          const move = MOVES[moveName];
-          if(!move || move.power === 0) return [0,0];
-          const aStat = move.category === 'Physical' ? p1.stats.atk : p1.stats.spAtk;
-          const dStat = move.category === 'Physical' ? p2.stats.def : p2.stats.spDef;
-          let baseDmg = Math.floor(Math.floor(Math.floor(2 * p1.lvl / 5 + 2) * move.power * (aStat / dStat)) / 50) + 2;
-          const stab = p1.type.includes(move.type) ? 1.5 : 1;
-          let typeMult = 1;
-          p2.type.forEach(t => { if(TYPE_CHART[move.type] && TYPE_CHART[move.type][t] !== undefined) typeMult *= TYPE_CHART[move.type][t]; });
-          
-          const min = Math.floor(baseDmg * stab * typeMult * 0.85);
-          const max = Math.floor(baseDmg * stab * typeMult * 1.0);
-          return [min, max];
+        setLogMsg(`What will ${player.team[idx].name} do?`);
+        setMenuState('main');
+        setLocked(false);
       };
 
       return (
         <div className="h-full flex flex-col w-full relative">
           
           {/* HEADER */}
-          <header className="h-14 px-4 flex items-center justify-between shrink-0 z-40 bg-[#070913]/95 border-b border-white/10">
+          <header className="h-12 sm:h-14 px-4 flex items-center justify-between shrink-0 z-40 bg-[#070913]/95 border-b border-white/10 shadow-md">
             <div>
-              <h1 className="text-[11px] text-white">POKÉMON <span className="text-indigo-400">CHAMPIONS</span></h1>
-              <span className="text-[8px] text-gray-400 font-sans">{gym.name}</span>
+              <h1 className="text-[10px] sm:text-xs text-white">POKÉMON <span className="text-indigo-400">CHAMPIONS</span></h1>
+              <span className="text-[7px] sm:text-[8px] text-gray-400 font-sans">{gym.name}</span>
             </div>
-            <button onClick={() => setScreen('hub')} className="text-[9px] text-red-400 border border-red-500/50 px-2 py-1 rounded hover:bg-red-500/20">FLEE</button>
+            <button onClick={() => setScreen('hub')} className="text-[8px] sm:text-[9px] text-red-400 border border-red-500/50 px-3 py-1 rounded hover:bg-red-500/20 transition-colors">FLEE</button>
           </header>
 
-          {/* 3D ARENA VIEWPORT */}
-          <main className="flex-1 stadium-viewport relative overflow-hidden flex flex-col justify-between p-4 pb-2 bg-slate-900">
+          {/* STADIUM VIEWPORT */}
+          <main className="flex-1 stadium-viewport relative overflow-hidden flex flex-col justify-between p-3 sm:p-4 pb-2 bg-slate-900">
             <div id="camera-rig" className={`camera-rig ${camState}`}>
               
-              {/* Background & Floor */}
               <div className={`absolute inset-[-20%] bg-layer ${gym.env} z-0`}></div>
               <div className="absolute inset-0 stadium-lights z-0 pointer-events-none"></div>
               
-              {/* 3D Battle Floor Ellipse */}
               <div className={`battle-pad pad-enemy ${gym.env}`}></div>
               <div className={`battle-pad pad-player ${gym.env}`}></div>
 
-              {/* VFX Rendering Layer */}
               <div className="vfx-layer">
                 {vfxList.map(v => {
                   const style = {
                     left: v.target === 'p2' ? '75%' : '25%',
-                    top: v.target === 'p2' ? '30%' : '70%',
+                    top: v.target === 'p2' ? '32%' : '68%',
                     '--vfx-color': v.color,
                     '--rot': v.target === 'p2' ? '35deg' : '-145deg'
                   };
@@ -796,53 +731,51 @@
 
               {/* ENEMY SPRITE */}
               <div className="sprite-container sprite-enemy">
-                <img id="sprite-p2" className="mon-sprite pixel-art anim-idle" src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${p2.dexId}.gif`} />
+                <img id="sprite-p2" className="mon-sprite pixel-art anim-idle" src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${p2.dexId}.gif`} alt={p2.name} />
               </div>
 
               {/* PLAYER SPRITE */}
               <div className="sprite-container sprite-player">
-                <img id="sprite-p1" className="mon-sprite pixel-art anim-idle" src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/back/${p1.dexId}.gif`} />
+                <img id="sprite-p1" className="mon-sprite pixel-art anim-idle" src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/back/${p1.dexId}.gif`} alt={p1.name} />
               </div>
 
             </div>
 
-            {/* HUD OVERLAYS (Fixed to screen, not 3D camera) */}
-            <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-40 pointer-events-none">
-               {/* Enemy HUD */}
-               <div className="glass-panel p-3 rounded-2xl w-48 md:w-64 border-rose-500/30">
-                  <div className="flex justify-between items-center text-[9px] mb-1">
+            {/* HUD OVERLAYS */}
+            <div className="absolute top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-4 flex justify-between items-start z-40 pointer-events-none">
+               <div className="glass-panel p-2.5 sm:p-3 rounded-2xl w-40 sm:w-56 md:w-64 border-rose-500/30">
+                  <div className="flex justify-between items-center text-[8px] sm:text-[9px] mb-1">
                     <span className="font-bold text-rose-400 truncate">{p2.name}</span>
                     <span className="text-gray-400 font-mono">Lv.{p2.lvl}</span>
                   </div>
-                  <div className="w-full h-2.5 bg-black/80 rounded-full overflow-hidden p-0.5 border border-white/10">
+                  <div className="w-full h-2 sm:h-2.5 bg-black/80 rounded-full overflow-hidden p-0.5 border border-white/10">
                     <div className={`h-full rounded-full transition-all duration-500 ${p2.hp/p2.maxHp > 0.5 ? 'bg-emerald-400' : p2.hp/p2.maxHp > 0.2 ? 'bg-amber-400' : 'bg-red-500'}`} style={{width: `${(p2.hp/p2.maxHp)*100}%`}}></div>
                   </div>
                </div>
 
-               {/* Player HUD */}
-               <div className="glass-panel p-3 rounded-2xl w-48 md:w-64 border-indigo-500/30 mt-24 md:mt-32">
-                  <div className="flex justify-between items-center text-[9px] mb-1">
+               <div className="glass-panel p-2.5 sm:p-3 rounded-2xl w-40 sm:w-56 md:w-64 border-indigo-500/30 mt-20 sm:mt-24 md:mt-32">
+                  <div className="flex justify-between items-center text-[8px] sm:text-[9px] mb-1">
                     <span className="font-bold text-indigo-400 truncate">{p1.name}</span>
                     <span className="text-gray-400 font-mono">Lv.{p1.lvl}</span>
                   </div>
-                  <div className="w-full h-2.5 bg-black/80 rounded-full overflow-hidden p-0.5 border border-white/10">
+                  <div className="w-full h-2 sm:h-2.5 bg-black/80 rounded-full overflow-hidden p-0.5 border border-white/10">
                     <div className={`h-full rounded-full transition-all duration-500 ${p1.hp/p1.maxHp > 0.5 ? 'bg-emerald-400' : p1.hp/p1.maxHp > 0.2 ? 'bg-amber-400' : 'bg-red-500'}`} style={{width: `${(p1.hp/p1.maxHp)*100}%`}}></div>
                   </div>
-                  <div className="text-[8px] text-right font-mono mt-1 text-slate-300">{p1.hp} / {p1.maxHp}</div>
+                  <div className="text-[7px] sm:text-[8px] text-right font-mono mt-1 text-slate-300">{p1.hp} / {p1.maxHp}</div>
                </div>
             </div>
           </main>
 
           {/* ACTION FOOTER */}
-          <footer className="h-48 bg-[#05060d]/95 border-t border-white/10 p-3 flex flex-col max-w-2xl mx-auto w-full z-40">
-            <div className="text-[10px] leading-relaxed text-indigo-200 h-10 flex items-center px-4 rounded-xl bg-white/5 font-mono border border-white/5 mb-2">
+          <footer className="h-44 sm:h-48 bg-[#05060d]/95 border-t border-white/10 p-3 flex flex-col max-w-2xl mx-auto w-full z-40">
+            <div className="text-[9px] sm:text-[10px] leading-relaxed text-indigo-200 h-10 flex items-center px-3 sm:px-4 rounded-xl bg-white/5 font-mono border border-white/5 mb-2 shadow-inner">
               {logMsg}
             </div>
 
             {menuState === 'main' && (
               <div className="grid grid-cols-2 gap-2 flex-1">
-                <button onClick={() => { playSfx('ui'); setMenuState('fight'); }} className="bg-red-600 hover:bg-red-500 rounded-xl border-b-4 border-red-800 font-bold text-sm active:translate-y-1 active:border-b-0 flex items-center justify-center gap-2">⚔️ FIGHT</button>
-                <button onClick={() => { playSfx('ui'); setMenuState('switch'); }} className="bg-green-600 hover:bg-green-500 rounded-xl border-b-4 border-green-800 font-bold text-sm active:translate-y-1 active:border-b-0 flex items-center justify-center gap-2">🔄 POKÉMON</button>
+                <button onClick={() => { playSfx('ui'); setMenuState('fight'); }} className="bg-red-600 hover:bg-red-500 rounded-xl border-b-4 border-red-800 font-bold text-xs sm:text-sm active:translate-y-1 active:border-b-0 flex items-center justify-center gap-2 transition-all">⚔️ FIGHT</button>
+                <button onClick={() => { playSfx('ui'); setMenuState('switch'); }} className="bg-green-600 hover:bg-green-500 rounded-xl border-b-4 border-green-800 font-bold text-xs sm:text-sm active:translate-y-1 active:border-b-0 flex items-center justify-center gap-2 transition-all">🔄 POKÉMON</button>
               </div>
             )}
 
@@ -852,37 +785,36 @@
                   {p1.moves.map(mName => {
                     const m = MOVES[mName];
                     if(!m) return null;
-                    const estDmg = getEstimatedDmg(mName);
                     return (
                       <button key={mName} onClick={() => executeMove(mName)} className="glass-panel p-2 rounded-xl text-left active:scale-95 transition-transform flex flex-col justify-between" style={{borderColor: `${m.color}80`}}>
                         <div className="flex justify-between w-full">
-                          <span className="text-[10px] font-bold text-white">{m.name}</span>
-                          <span className="text-[8px] font-bold" style={{color: m.color}}>{m.type}</span>
+                          <span className="text-[9px] sm:text-[10px] font-bold text-white">{m.name}</span>
+                          <span className="text-[7px] sm:text-[8px] font-bold" style={{color: m.color}}>{m.type}</span>
                         </div>
                         <div className="flex justify-between w-full mt-1 opacity-80">
-                          <span className="text-[8px] font-mono">PWR {m.power||'--'}</span>
-                          {m.power > 0 && <span className="text-[8px] text-yellow-300 font-mono">Dmg: {estDmg[0]}-{estDmg[1]}</span>}
+                          <span className="text-[7px] sm:text-[8px] font-mono">PWR {m.power||'--'}</span>
+                          {m.power > 0 && <span className="text-[7px] sm:text-[8px] text-yellow-300 font-mono">100%</span>}
                         </div>
                       </button>
                     )
                   })}
                 </div>
-                <button onClick={() => setMenuState('main')} className="bg-slate-800 p-2 rounded-lg text-[9px] font-bold text-slate-300">BACK</button>
+                <button onClick={() => setMenuState('main')} className="bg-slate-800 p-2 rounded-lg text-[8px] sm:text-[9px] font-bold text-slate-300 hover:bg-slate-700 transition-colors">BACK</button>
               </div>
             )}
 
             {menuState === 'switch' && (
               <div className="flex flex-col h-full gap-2">
-                <div className="flex overflow-x-auto gap-2 flex-1 pb-1">
+                <div className="flex overflow-x-auto gap-2 flex-1 pb-1 no-scrollbar">
                   {player.team.map((mon, idx) => (
-                    <button key={mon.id} disabled={mon.hp <= 0 || idx === activeP1} onClick={() => switchMon(idx)} className={`min-w-[120px] p-2 rounded-xl border-2 flex flex-col items-center ${mon.hp <= 0 ? 'bg-red-950/50 border-red-900 opacity-50 grayscale' : idx === activeP1 ? 'bg-slate-700 border-yellow-500' : 'bg-slate-800 border-slate-600 active:scale-95'}`}>
-                      <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${mon.dexId}.png`} className="w-10 h-10 pixel-art" />
-                      <span className="text-[9px] font-bold mt-1 truncate w-full text-center">{mon.name}</span>
-                      <span className="text-[8px] font-mono text-slate-400">{mon.hp}/{mon.maxHp}</span>
+                    <button key={mon.id} disabled={mon.hp <= 0 || idx === activeP1} onClick={() => switchMon(idx)} className={`min-w-[110px] sm:min-w-[120px] p-2 rounded-xl border-2 flex flex-col items-center shrink-0 ${mon.hp <= 0 ? 'bg-red-950/50 border-red-900 opacity-50 grayscale' : idx === activeP1 ? 'bg-slate-700 border-yellow-500' : 'bg-slate-800 border-slate-600 active:scale-95 hover:bg-slate-700'}`}>
+                      <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${mon.dexId}.png`} className="w-9 h-9 sm:w-10 sm:h-10 pixel-art" />
+                      <span className="text-[8px] sm:text-[9px] font-bold mt-1 truncate w-full text-center">{mon.name}</span>
+                      <span className="text-[7px] sm:text-[8px] font-mono text-slate-400">{mon.hp}/{mon.maxHp}</span>
                     </button>
                   ))}
                 </div>
-                {!locked && <button onClick={() => setMenuState('main')} className="bg-slate-800 p-2 rounded-lg text-[9px] font-bold text-slate-300 mt-1">BACK</button>}
+                {!locked && <button onClick={() => setMenuState('main')} className="bg-slate-800 p-2 rounded-lg text-[8px] sm:text-[9px] font-bold text-slate-300 hover:bg-slate-700 transition-colors mt-1">BACK</button>}
               </div>
             )}
           </footer>
@@ -890,7 +822,7 @@
       );
     };
 
-    // Initialize React App
+    // Render App
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<App />);
   </script>
