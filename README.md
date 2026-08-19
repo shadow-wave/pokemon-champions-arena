@@ -1,28 +1,35 @@
-<div align="center">
+# 🏆 Pokémon Champions: Ultimate FX
 
-  # ⚡ Pokémon Champions: Stadium Arena
-  ### Client-Side 3D Perspective Pokémon Battle Simulator
+A full-fledged, web-based Pokémon battle engine and stadium experience built with React, Tone.js, and PeerJS. 
 
-  [![Play Live](https://img.shields.io/badge/Play_Live-GitHub_Pages-ef4444?style=for-the-badge&logo=googlechrome&logoColor=white)](https://shadow-wave.github.io/pokemon-champions-arena/)
-  [![Zero Build](https://img.shields.io/badge/Zero_Build-Single_File-6366f1?style=for-the-badge&logo=javascript&logoColor=white)](https://developer.mozilla.org/)
-  [![PWA Ready](https://img.shields.io/badge/PWA-Installable-10b981?style=for-the-badge&logo=pwa&logoColor=white)](https://shadow-wave.github.io/pokemon-champions-arena/)
+## ✨ Features
+* **Dynamic 3D Battle Arena**: Fluid, cinematic camera movements with 3D stadium pedestals that change themes (Grass, Water, Magma, Cyber Grid) based on the current battle environment.
+* **Complete Pokédex & Movesets**: Features Pokémon from Gen 1 to Gen 9, complete with accurate type-effectiveness, STAB calculations, and status conditions.
+* **Wild Encounters & Catching Mechanics**: Explore the wild area, battle wild Pokémon, and use Poké Balls from your inventory to catch and add them to your party.
+* **Stadium Gym Challenges**: Progress through all 8 Kanto Gyms, Alola Trials, and challenge the Pokémon League!
+* **Tone.js Synthesized Audio**: 100% procedurally generated retro sound effects for attacks, healing, critical hits, and catching (no external audio files required!).
+* **PWA Ready**: Fully installable on mobile and desktop with offline caching support.
 
-  <p align="center">
-    A high-speed, standalone Pokémon battle stadium simulator built with pure JavaScript, Tailwind CSS, Tone.js chiptune synthesis, and dynamic 3D camera physics.
-  </p>
+## 🛠️ Tech Stack
+* **Frontend**: HTML5, Tailwind CSS, Vanilla JavaScript / React
+* **Audio Engine**: Tone.js
+* **Multiplayer**: PeerJS (P2P Connectivity)
+* **Assets**: PokéAPI Sprites
 
-</div>
+## 🚀 How to Play
+1. Simply visit the GitHub Pages link (or clone this repository).
+2. Click **Wild Battle** to catch new Pokémon.
+3. Manage your team in the **Party** menu and heal up when necessary.
+4. Take on the **Gym Battles** to earn badges and money!
+
+## 📥 Installation (For Local Development)
+Clone the repository and serve the files using any standard web server:
+\`\`\`bash
+git clone https://github.com/your-username/pokemon-game.git
+cd pokemon-game
+# You can use Live Server in VS Code, or python's http.server
+python -m http.server 8000
+\`\`\`
 
 ---
-
-## 🌟 Engine Highlights
-
-* 🏟️ **3D Pitch Perspective & Dynamic Cameras:** Stadium lighting, camera shake, and physical platform tilt rendering that focuses during turns.
-* 🎬 **Animated Showdown Sprites:** High-frame-rate animated sprites directly integrated from PokeAPI.
-* ⚡ **Synthesized Audio Engine:** Procedural hit noises and battle cues generated client-side via **Tone.js** without external MP3 dependencies.
-* 💥 **Type Effectiveness System:** Dynamic damage multipliers (Super Effective 2.0x, Resisted 0.5x) with smooth health bar transitions.
-* 🏆 **Complete Gym Challenges:** Face off against Brock, Misty, Lt. Surge, Erika, Koga, Sabrina, Blaine, Giovanni, and Lance.
-
----
-
-<sub>Developed by Aravind O. K. • Kannur, Kerala</sub>
+**Developed by Aravind O.K.**
