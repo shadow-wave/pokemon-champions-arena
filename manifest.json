@@ -1,18 +1,22 @@
 {
-  "name": "Pokémon Champions Stadium",
+  "name": "Pokémon Champions: Ultimate FX",
   "short_name": "PokeChampions",
-  "description": "Next-Gen 3D Perspective Web Pokémon Stadium Battle Engine",
-  "start_url": "./index.html",
-  "display": "standalone",
+  "description": "An ultimate 3D Pokémon web battle engine featuring Gen 1-9, dynamic weather, and multiplayer.",
+  "start_url": "/pokemon-game/",
+  "display": "fullscreen",
+  "background_color": "#050505",
+  "theme_color": "#6366f1",
   "orientation": "landscape",
-  "background_color": "#030308",
-  "theme_color": "#030308",
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Ccircle cx='256' cy='256' r='240' fill='%23060813' stroke='%23ef4444' stroke-width='24'/%3E%3Cpath d='M28 256h456' stroke='%231e293b' stroke-width='28'/%3E%3Ccircle cx='256' cy='256' r='64' fill='%23ffffff' stroke='%231e293b' stroke-width='20'/%3E%3Ccircle cx='256' cy='256' r='32' fill='%236366f1'/%3E%3C/svg%3E",
-      "sizes": "192x192 512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
     }
   ]
 }
